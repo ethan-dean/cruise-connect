@@ -1,14 +1,26 @@
+import dotenv from 'dotenv';
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Provides DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT
+dotenv.config()
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function exports for 'database.ts'.
 // Constants set in docker, "compose.yaml".
 
 const dbConnectionConfig = {
-  host: process.env.DATABASE_HOST || 'localhost',
-  port: process.env.DATABASE_PORT || 3306,
-  user: process.env.DATABASE_USER || 'root',
-  password: process.env.DATABASE_PASSWORD || 'pass',
-  database: process.env.DATABASE_DB || 'example',
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME, 
+  port: Number(process.env.DB_PORT),
+  waitForConnections: true,
+  connectionLimit: 1,
+  queueLimit: 0,
 };
+//TODO: Remove this debug
+console.log(dbConnectionConfig);
 const serverPort = 5000;
 const devServerPort = 5173;
 

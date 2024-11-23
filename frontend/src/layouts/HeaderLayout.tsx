@@ -10,7 +10,7 @@ export default function HeaderLayout() {
     <div>
       <header className='header-container'>
         <div className = 'header-logo-container'>
-          <Link className='header-logo' to={isAuthenticated ? '/dashboard' : '/'}>TypeCode</Link>
+          <Link className='header-logo' to={isAuthenticated ? '/dashboard' : '/'}>Website</Link>
         </div>
         <div className='header-options-container'>
           <Link className='header-about' to='/about'>About</Link>

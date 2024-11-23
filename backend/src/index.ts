@@ -2,8 +2,8 @@ import { expressServer } from './server';
 import { serverPort } from './config';
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Start the server.
-expressServer.listen(serverPort, () => {
+// Start the http server that takes requests from nginx.
+const httpServer = expressServer.listen(serverPort, () => {
   console.log(`Server is running on http://localhost:${serverPort}`);
 });
 
@@ -29,7 +29,7 @@ process.on("SIGTERM", function onSigterm() {
 
 // Shut down server.
 function shutdown() {
-  expressServer.close((err: any) => {
+  httpServer.close((err: any) => {
     if (err) {
       console.error(err);
       process.exit(1);

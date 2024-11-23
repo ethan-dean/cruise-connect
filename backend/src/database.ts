@@ -1,75 +1,169 @@
 const mysql = require('mysql2');
 
-const { dbConnectionConfig } = require('./config');
+import { dbConnectionConfig } from './config';
+
+
+// The length of a string in the database.
+const maxStringLength = 50;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Create a connection to the database.
 const connection = mysql.createConnection(dbConnectionConfig);
 
-// Connect to the database.
-connection.connect((err: any) => {
+function connectToDatabase() {
+  connection.connect((err: any) => {
     if (err) {
-        console.error('Error connecting to MariaDB:', err.stack);
-        return;
+      console.error('Error connecting to DB:', err.stack);
+      return;
     }
-    console.error('Connected to MariaDB as id ' + connection.threadId);
-});
-connection.query('SHOW DATABASES',(err: any, results: any) => {
-  if (err) {
-    console.error('Error showing databases');
-    return;
-  }
-  console.error(results);
-});
+    console.log('Connected to DB as id ' + connection.threadId);
+  });
+}
+connectToDatabase();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Create user_data table if it does not exist already.
-const createUserTableQuery = `
-  CREATE TABLE IF NOT EXISTS user_data (
-    user_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    first_name VARCHAR(30) NOT NULL,
-    last_name VARCHAR(30) NOT NULL
-  )`;
-connection.query(createUserTableQuery, (err: any, results: any, fields: any) => {
-  if (err) {
-    console.error('Error creating table:', err.stack);
-    return;
-  }
-  console.log(results);
-});
+function setupDatabase() {
+  // Log available databases (Optional: for debugging)
+  connection.query('SHOW DATABASES', (err: any, results: any) => {
+    if (err) {
+      console.error('Error showing databases:', err.stack);
+      return;
+    }
+    console.log('Available Databases:', results);
+  });
 
-// Check data on startup.
-connection.query('SELECT * FROM user_data',(err: any, results: any) => {
-  if (err) {
-    console.error('Error secting table user_data');
-    return;
+  // Create user_data table if it does not exist
+  const createUserTableQuery = `
+    CREATE TABLE IF NOT EXISTS user_data (
+      user_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      first_name VARCHAR(${maxStringLength}) NOT NULL,
+      last_name VARCHAR(${maxStringLength}) NOT NULL,
+      email VARCHAR(${maxStringLength}) NOT NULL,
+      password VARCHAR(${maxStringLength}) NOT NULL,
+      email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      email_code VARCHAR(${maxStringLength}) NOT NULL
+    )`;
+
+  connection.query(createUserTableQuery, (err: any) => {
+    if (err) {
+      console.error('Error creating user_data table:', err.stack);
+      return;
+    }
+    console.log('user_data table is set up and ready.');
+  });
+
+  // Optional: Log existing user_data records (for debugging)
+  connection.query('SELECT * FROM user_data', (err: any, results: any) => {
+    if (err) {
+      console.error('Error querying user_data:', err.stack);
+      return;
+    }
+    console.log('Existing user_data records:', results);
+  });
+}
+setupDatabase();
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Utility functions
+function query(sql: string, params: any[]): Promise<any> {
+  return new Promise((resolve, reject) => {
+    connection.query(sql, params, (err: any, results: any) => {
+      if (err) reject(err);
+      else resolve(results);
+    });
+  });
+}
+
+function validateStringFieldLengths(stringFields: Object) {
+  for (const [fieldName, value] of Object.entries(stringFields)) {
+    if (value.length > maxStringLength) {
+      return `stringLengthError: <${fieldName}> must be ${maxStringLength} characters or fewer.`;
+    }
   }
-  console.log(results);
-});
+  return null;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Functions for https server to use to query database.
-function handleError(err: any, results: any) {
-  if (err) {
-    return [err, null];
-  }
-  return [null, results];
-}
+// Database query functions for express server.
 
 // Add user to user_data.
-async function addUser(firstName: any, lastName: any) {
-  const insertUserQuery = `INSERT INTO user_data (first_name, last_name) 
-                             VALUES (?, ?)`;
-  connection.query(insertUserQuery, [firstName, lastName], handleError);
+async function addUser(firstName: string, lastName: string, email: string, password: string, emailCode: string): Promise<[string|null, any]> {
+  const addUserQuery = `INSERT INTO user_data (first_name, last_name, email, password, email_verified, email_code) 
+                             VALUES (?, ?, ?, ?, ?, ?)`;
+  // Validate string fileds to be correct length.
+  const validationError = validateStringFieldLengths({firstName, lastName, email, password, emailCode});
+  if (validationError) {
+    return [ validationError, null ];
+  }
+  // Query database, pass in false for email_verified since it starts un-verified.
+  try {
+    const results = await query(addUserQuery, [firstName, lastName, email, password, false, emailCode]);
+    return [ null, results ];
+  } catch (err: any) {
+    return [ err, null ]
+  }
 }
 
-// Edit user data in user_data.
-async function editUser(firstName: any, lastName: any, userID: any) {
+// Edit user in user_data (camelCase is converted to snake_case for database).
+type UpdateUserParams = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
+  emailVerified?: boolean;
+  emailCode?: string;
+};
+async function updateUser(updateParams: UpdateUserParams, userID: string): Promise<[string|null, any]> {
+  // Dynamically handle each key-value pair in the updateParams.
+  const fieldsToUpdate: string[] = [];
+  const valuesToUpdate: any[] = [];
+  for (const [key, value] of Object.entries(updateParams)) {
+    if (value !== undefined) {
+      const snakeCaseKey = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+      fieldsToUpdate.push(`${snakeCaseKey} = ?`);
+      valuesToUpdate.push(value);
+    }
+  }
+  // Construct the dynamic query.
   const updateUserQuery = `UPDATE user_data 
-                             SET first_name = ?, last_name = ? 
-                             WHERE user_id = ?`;
-  connection.query(updateUserQuery, [firstName, lastName, userID], handleError);
+                           SET ${fieldsToUpdate.join(", ")} 
+                           WHERE user_id = ?`;
+  // Validate string fields to be correct length.
+  const fieldsToValidate = Object.fromEntries(
+    Object.entries(updateParams).filter(([_, value]) => value !== undefined)
+  );
+  const validationError = validateStringFieldLengths(fieldsToValidate);
+  if (validationError) {
+    return [ validationError, null ];
+  }
+  // Query database.
+  try {
+    const results = await query(updateUserQuery, [...valuesToUpdate, userID]);
+    return [ null, results ];
+  } catch (err: any) {
+    return [ err, null ]
+  }
+}
+
+// Get user based on email and return their info.
+async function getUserFromEmail(email: any): Promise<[string|null, any]> {
+  const getUserQuery = `SELECT (user_id, first_name, last_name, password)
+                              FROM user_data 
+                              WHERE email = ?`;
+  // Validate string fileds to be correct length.
+  const validationError = validateStringFieldLengths({ email });
+  if (validationError) {
+    return [ validationError, null ];
+  }
+  // Query database.
+  try {
+    const results = await query(getUserQuery, [email]);
+    return [ null, results ];
+  } catch (err: any) {
+    return [ err, null ]
+  }
 }
 
 
@@ -77,5 +171,6 @@ async function editUser(firstName: any, lastName: any, userID: any) {
 // Function exports for 'database.ts'.
 export {
   addUser,
-  editUser,
+  updateUser,
+  getUserFromEmail,
 };
