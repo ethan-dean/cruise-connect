@@ -4,6 +4,9 @@
 # Node
 node_modules
 
+# Compiled .ts files
+src/*.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -3,8 +3,8 @@ const mysql = require('mysql2');
 import { dbConnectionConfig } from './config';
 
 
-// The length of a string in the database.
-const maxStringLength = 50;
+// The length of a string in the database (60 chars since bcrypt's hash function outputs 60 chars).
+const maxStringLength = 60;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Create a connection to the database.
@@ -42,7 +42,9 @@ function setupDatabase() {
       email VARCHAR(${maxStringLength}) NOT NULL,
       password VARCHAR(${maxStringLength}) NOT NULL,
       email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-      email_code VARCHAR(${maxStringLength}) NOT NULL
+      email_code VARCHAR(${maxStringLength}) NOT NULL,
+      email_code_timeout INT UNSIGNED NOT NULL,
+      email_code_attempts INT UNSIGNED NOT NULL
     )`;
 
   connection.query(createUserTableQuery, (err: any) => {
@@ -89,9 +91,9 @@ function validateStringFieldLengths(stringFields: Object) {
 // Database query functions for express server.
 
 // Add user to user_data.
-async function addUser(firstName: string, lastName: string, email: string, password: string, emailCode: string): Promise<[string|null, any]> {
-  const addUserQuery = `INSERT INTO user_data (first_name, last_name, email, password, email_verified, email_code) 
-                             VALUES (?, ?, ?, ?, ?, ?)`;
+async function addUser(firstName: string, lastName: string, email: string, password: string, emailVerified: boolean, emailCode: string, emailCodeTimeout: number, emailCodeAttempts: number): Promise<[string|null, any]> {
+  const addUserQuery = `INSERT INTO user_data (first_name, last_name, email, password, email_verified, email_code, email_code_timeout, email_code_attempts)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
   // Validate string fileds to be correct length.
   const validationError = validateStringFieldLengths({firstName, lastName, email, password, emailCode});
   if (validationError) {
@@ -99,7 +101,7 @@ async function addUser(firstName: string, lastName: string, email: string, passw
   }
   // Query database, pass in false for email_verified since it starts un-verified.
   try {
-    const results = await query(addUserQuery, [firstName, lastName, email, password, false, emailCode]);
+    const results = await query(addUserQuery, [firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts]);
     return [ null, results ];
   } catch (err: any) {
     return [ err, null ]
@@ -114,6 +116,8 @@ type UpdateUserParams = {
   password?: string;
   emailVerified?: boolean;
   emailCode?: string;
+  emailCodeTimeout?: number;
+  emailCodeAttempts?: number;
 };
 async function updateUser(updateParams: UpdateUserParams, userID: string): Promise<[string|null, any]> {
   // Dynamically handle each key-value pair in the updateParams.
@@ -132,7 +136,7 @@ async function updateUser(updateParams: UpdateUserParams, userID: string): Promi
                            WHERE user_id = ?`;
   // Validate string fields to be correct length.
   const fieldsToValidate = Object.fromEntries(
-    Object.entries(updateParams).filter(([_, value]) => value !== undefined)
+    Object.entries(updateParams).filter(([_, value]) => (typeof value === 'string' && value !== undefined))
   );
   const validationError = validateStringFieldLengths(fieldsToValidate);
   if (validationError) {
@@ -148,8 +152,8 @@ async function updateUser(updateParams: UpdateUserParams, userID: string): Promi
 }
 
 // Get user based on email and return their info.
-async function getUserFromEmail(email: any): Promise<[string|null, any]> {
-  const getUserQuery = `SELECT (user_id, first_name, last_name, password)
+async function getUserFromEmail(email: string): Promise<[string|null, any]> {
+  const getUserQuery = `SELECT user_id, first_name, last_name, password, email_verified, email_code, email_code_timeout, email_code_attempts
                               FROM user_data 
                               WHERE email = ?`;
   // Validate string fileds to be correct length.

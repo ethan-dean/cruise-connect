@@ -19,8 +19,6 @@ const dbConnectionConfig = {
   connectionLimit: 1,
   queueLimit: 0,
 };
-//TODO: Remove this debug
-console.log(dbConnectionConfig);
 const serverPort = 5000;
 const devServerPort = 5173;
 

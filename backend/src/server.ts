@@ -12,8 +12,10 @@ import { devServerPort } from './config';
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Provides JWT_SECRET, EMAIL_PASSWORD_SECRET
-dotenv.config()
+// Secrets and constants
+dotenv.config()   // Provides JWT_SECRET, EMAIL_PASSWORD_SECRET
+const EMAIL_CODE_TIMEOUT_MINUTES: number = 10;
+const MAX_EMAIL_CODE_ATTEMPTS: number = 5;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Initialize server app.
@@ -77,27 +79,97 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Fill in API routes here.
+// Function to validate password requirements.
+function isValidPassword(password: string): boolean {
+  // Regular expressions to check each condition
+  const minLength = /.{8,}/;              // At least 8 characters
+  const hasCapital = /[A-Z]/;             // At least one uppercase letter
+  const hasNumber = /\d/;                 // At least one digit
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/; // At least one special character
 
+  // Check all conditions
+  return (
+    minLength.test(password) &&
+    hasCapital.test(password) &&
+    hasNumber.test(password) &&
+    hasSpecialChar.test(password)
+  );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
 // Register endpoint
 expressServer.post('/api/v1/user/register', async (req: any, res: any) => {
   const { firstName, lastName, email, password } = req.body;
 
-  const [ getErr, _getResult ] = await getUserFromEmail(email);
-  if (getErr) {
+  const [ getErr, dbResult ] = await getUserFromEmail(email);
+  if (getErr || dbResult.length > 0) {
     return res.status(500).json({ message: 'Account already exists with email', error: getErr });
   }
+
+  if (!isValidPassword(password)) {
+    return res.status(500).json({ message: 'Password does not meet requirements' });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValidEmail = emailRegex.test(email);
+  if (!isValidEmail) {
+    return res.status(500).json({ message: 'Email does not meet requirements' });
+  }
+
+  const nameRegex = /^[a-zA-Z]+([ '-][a-zA-Z]+)*$/;
+  const isValidFirstName = nameRegex.test(firstName);
+  const isValidLastName = nameRegex.test(lastName);
+  if (!isValidFirstName || !isValidLastName) {
+    return res.status(500).json({ message: 'Names must be non-empty, alphabetic fields with spaces and dashes' });
+  }
+  const formattedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+  const formattedLastName = lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
 
   // Hash and salt the password
   const hashedPassword = await hashPassword(password);
 
-  // Generate email verification code (simple example using a random number)
-  const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
-  
   // Save user to the database
-  const [ err, _result ] = await addUser(firstName, lastName, email, hashedPassword, emailCode);
+  const emailVerified = false;
+  const emailCode = "";
+  const emailCodeTimeout = 0;
+  const emailCodeAttempts = MAX_EMAIL_CODE_ATTEMPTS;
+  const [ err, _result ] = await addUser(formattedFirstName, formattedLastName, email, hashedPassword, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts);
   if (err) {
     return res.status(500).json({ message: 'Registration failed', error: err });
+  }
+
+  // Respond to client
+  res.status(201).json({ message: 'User registered successfully.' });
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Send verification code endpoint 
+expressServer.post('/api/v1/user/send-verification-code', async (req: any, res: any) => {
+  const { email, forceResendRegardlessTimeout } = req.body;
+  
+  const [ getErr, dbResult ] = await getUserFromEmail(email);
+  if (getErr || dbResult.length === 0) {
+    return res.status(500).json({ message: 'Failed to find associated account', error: getErr });
+  }
+
+  if (dbResult[0].email_verified) {
+    return res.status(500).json({ message: 'Account already verified' });
+  }
+
+  // Only a new code on a redirect that has a timed out code, or a press of resend code button
+  const isExistingCodeTimedOut: boolean = dbResult[0].email_code_timeout < (Date.now() / 1000);
+  if (!isExistingCodeTimedOut && !forceResendRegardlessTimeout) {
+    return res.status(200).json({ message: 'Existing email code still valid, did not force resend' });
+  }
+
+  // Generate email verification code (simple example using a random number)
+  const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
+  // Calculate timeout in unix time
+  const emailCodeTimeout = (Math.floor(Date.now() / 1000)) + 60 * EMAIL_CODE_TIMEOUT_MINUTES;
+  // Save emailCode to the database
+  const [ err, _result ] = await updateUser({ emailCode: emailCode, emailCodeTimeout: emailCodeTimeout, emailCodeAttempts: 0 }, dbResult[0].user_id);
+  if (err) {
+    return res.status(500).json({ message: 'Saving email code failed', error: err });
   }
 
   // Send verification email
@@ -107,102 +179,133 @@ expressServer.post('/api/v1/user/register', async (req: any, res: any) => {
     subject: 'Email Verification',
     text: `Your verification code is: ${emailCode}`
   };
-  
   transporter.sendMail(mailOptions, (err, _info) => {
     if (err) {
       return res.status(500).json({ message: 'Error sending verification email', error: err.message });
     }
-    res.status(200).json({ message: 'Verification emaill code sent' });
+    res.status(201).json({ message: 'Please check your email for verification.' });
   });
-
-  // Respond to client
-  res.status(201).json({ message: 'User registered successfully. Please check your email for verification.' });
 });
 
-// Verify email endpoint 
-expressServer.post('/api/v1/user/verify-email', async (req: any, res: any) => {
+///////////////////////////////////////////////////////////////////////////////////////////
+// Check verification code endpoint 
+expressServer.post('/api/v1/user/check-verification-code', async (req: any, res: any) => {
   const { email, emailCode } = req.body;
   
-  const [ getErr, getResult ] = await getUserFromEmail(email);
-  if (getErr) {
+  const [ getErr, dbResult ] = await getUserFromEmail(email);
+  if (getErr || dbResult.length === 0) {
     return res.status(500).json({ message: 'Failed to find associated account', error: getErr });
   }
 
-  const isValidCode: boolean = emailCode === getResult.emailCode;
+  if (dbResult[0].email_verified) {
+    return res.status(500).json({ message: 'Account already verified' });
+  }
+
+  // If code is timed out, frontend will remove submit button and prompt user to press resend code
+  const isCodeTimedOut: boolean = dbResult[0].email_code_timeout < (Date.now() / 1000);
+  if (isCodeTimedOut) {
+    return res.status(500).json({ message: 'Email verification code timed out'});
+  }
+
+  // If all attempts used, frontend will remove submit button and prompt user to press resend code
+  const isAttemptsRemaining: boolean = dbResult[0].email_code_attempts < MAX_EMAIL_CODE_ATTEMPTS;
+  if (!isAttemptsRemaining) {
+    return res.status(500).json({ message: `Attempt rejected, all ${MAX_EMAIL_CODE_ATTEMPTS} email code attempts used` })
+  }
+  const numAttempts = dbResult[0].email_code_attempts + 1;
+  const [ updateAttemptErr, _updateAttemptResult ] = await updateUser({ emailCodeAttempts: numAttempts }, dbResult[0].user_id);
+  if (updateAttemptErr) {
+    return res.status(500).json({ message: 'Failed to update attempt count', error: updateAttemptErr });
+  }
+
+  const isValidCode: boolean = (emailCode == dbResult[0].email_code);
   if (!isValidCode) {
     return res.status(500).json({ message: 'Failed to validate verification code', error: 'Codes do not match'});
   }
 
   // Update email_verified in the database
-  const [ err, _results ] = await updateUser({ emailVerified: true, emailCode: "" }, getResult.userID);
+  const [ err, _result ] = await updateUser({ emailVerified: true, emailCode: "", emailCodeTimeout: 0, emailCodeAttempts: MAX_EMAIL_CODE_ATTEMPTS }, dbResult[0].user_id);
   if (err) {
-    return res.status(500).json({ message: 'Failed to reset password', error: err });
+    return res.status(500).json({ message: 'Failed to verify email', error: err });
   }
 
-  res.status(200).json({ message: 'Password reset successfully' });
+  res.status(200).json({ message: 'Verified email successfully' });
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////
 // Login endpoint
 expressServer.post('/api/v1/user/login', async (req: any, res: any) => {
   const { email, password } = req.body;
 
   // Retrieve user from database
-  const [ err, result ] = await getUserFromEmail(email); 
-  if (err || result.length === 0) {
+  const [ err, dbResult ] = await getUserFromEmail(email); 
+  if (err || dbResult.length === 0) {
     return res.status(401).json({ message: 'Invalid email or password' });
   }
 
-  // TODO: Did I need this?
-  // const user = result[0];
+  // If email is not verified, will redirect user to verify page
+  if (!dbResult[0].email_verified) {
+    return res.status(401).json({ message: 'Email not verified yet'});
+  }
 
-  // Validate password
-  const isPasswordCorrect = await bcrypt.compare(password, result.password);
+  const isPasswordCorrect = await bcrypt.compare(password, dbResult[0].password);
   if (!isPasswordCorrect) {
     return res.status(401).json({ message: 'Invalid email or password' });
-  }
-  // Validate email_verified
-  if (!result.emailVerified) {
-    return res.status(401).json({ message: 'Email not verified yet'});
   }
 
   // Generate JWT
   const token = jwt.sign(
-    { userId: result.user_id, email: result.email, firstName: result.first_name, lastName: result.last_name },
+    { userId: dbResult[0].user_id, email: dbResult[0].email, firstName: dbResult[0].first_name, lastName: dbResult[0].last_name },
     process.env.JWT_SECRET!,
-    { expiresIn: "1h" }
+    { expiresIn: "24h" }
   );
 
   // Respond to client
   res.status(200).json({ message: 'Login successful', token });
 });
 
-// Forgot password endpoint
-expressServer.post('/api/v1/user/forgot-password', async (req: any, res: any) => {
-  const { email } = req.body;
+///////////////////////////////////////////////////////////////////////////////////////////
+// Send password reset code endpoint
+expressServer.post('/api/v1/user/send-password-reset-code', async (req: any, res: any) => {
+  const { email, forceResendRegardlessTimeout } = req.body;
 
   // Get user to update their email code
-  const [ getErr, getResult ] = await getUserFromEmail(email); 
-  if (getErr || getResult.length === 0) {
+  const [ getErr, dbResult ] = await getUserFromEmail(email); 
+  if (getErr || dbResult.length === 0) {
     return res.status(401).json({ message: 'Invalid email' });
   }
 
-  // Generate a reset code (simple example using a random number)
-  const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
+  // If email is not verified, will redirect user to verify page
+  if (!dbResult[0].email_verified) {
+    return res.status(401).json({ message: 'Email not verified yet'});
+  }
 
-  // Update email_code in the database
-  const [ err, _results ] = await updateUser({ emailCode: emailCode }, getResult.userID);
+  // NOTE: Since we redirect immediately if not verified, we can use emailCode fields
+  // because it is guaranteed the user isn't using those for email verification
+
+  // Only a new code on a redirect that has a timed out code, or a press of resend code button
+  const isExistingCodeTimedOut: boolean = dbResult[0].email_code_timeout < (Date.now() / 1000)
+  if (!isExistingCodeTimedOut && !forceResendRegardlessTimeout) {
+    return res.status(200).json({ message: 'Existing email code still valid, did not force resend' });
+  }
+
+  // Generate email verification code (simple example using a random number)
+  const emailCode = Math.floor(100000 + Math.random() * 900000).toString();
+  // Calculate timeout in unix time
+  const emailCodeTimeout = (Math.floor(Date.now() / 1000)) + 60 * EMAIL_CODE_TIMEOUT_MINUTES;
+  // Save emailCode to the database
+  const [ err, _result ] = await updateUser({ emailCode: emailCode, emailCodeTimeout: emailCodeTimeout, emailCodeAttempts: 0 }, dbResult[0].user_id);
   if (err) {
-    return res.status(500).json({ message: 'Failed to reset password', error: err });
+    return res.status(500).json({ message: 'Saving reset code failed', error: err });
   }
   
-  // Send reset code to user's email
+  // Send reset code email
   const mailOptions = {
     from: 'your_email@example.com',
     to: email,
     subject: 'Password Reset Request',
     text: `Your password reset code is: ${emailCode}\nNot you? Just ignore this email.`
   };
-
   transporter.sendMail(mailOptions, (err, _info) => {
     if (err) {
       return res.status(500).json({ message: 'Error sending reset code', error: err.message });
@@ -211,25 +314,44 @@ expressServer.post('/api/v1/user/forgot-password', async (req: any, res: any) =>
   });
 });
 
-// Password reset endpoint
-expressServer.post('/api/v1/user/reset-password', async (req: any, res: any) => {
+///////////////////////////////////////////////////////////////////////////////////////////
+// Check password reset code endpoint
+expressServer.post('/api/v1/user/check-password-reset-code', async (req: any, res: any) => {
   const { email, emailCode, newPassword } = req.body;
   
-  const [ getErr, getResult ] = await getUserFromEmail(email);
-  if (getErr) {
+  const [ getErr, dbResult ] = await getUserFromEmail(email);
+  if (getErr || dbResult.length === 0) {
     return res.status(500).json({ message: 'Failed to find associated account', error: getErr });
   }
 
-  const isValidCode: boolean = emailCode === getResult.emailCode;
-  if (!isValidCode) {
-    return res.status(500).json({ message: 'Failed to validate verification code', error: 'Codes do not match'});
+  // If code is timed out, frontend will remove submit button and prompt user to press resend code
+  const isCodeTimedOut: boolean = dbResult[0].email_code_timeout < (Date.now() / 1000)
+  if (isCodeTimedOut) {
+    return res.status(500).json({ message: 'Email verification code timed out'})
   }
 
-  // Hash the new password
+  const isAttemptsRemaining: boolean = dbResult[0].email_code_attempts < MAX_EMAIL_CODE_ATTEMPTS;
+  if (!isAttemptsRemaining) {
+    return res.status(500).json({ message: `Attempt rejected, all ${MAX_EMAIL_CODE_ATTEMPTS} email code attempts used` })
+  }
+  const numAttempts = dbResult[0].email_code_attempts + 1;
+  const [ updateAttemptErr, _updateAttemptResult ] = await updateUser({ emailCodeAttempts: numAttempts }, dbResult[0].user_id);
+  if (updateAttemptErr) {
+    return res.status(500).json({ message: 'Failed to update attempt count', error: updateAttemptErr });
+  }
+
+  const isValidCode: boolean = emailCode === dbResult[0].email_code;
+  if (!isValidCode) {
+    return res.status(500).json({ message: 'Failed to validate verification code' });
+  }
+
+  if (!isValidPassword(newPassword)) {
+    return res.status(500).json({ message: 'Password does not meet requirements' });
+  }
   const hashedPassword = await hashPassword(newPassword);
 
   // Update password in the database
-  const [ err, _results ] = await updateUser({ password: hashedPassword, emailCode: "" }, getResult.userID);
+  const [ err, _results ] = await updateUser({ password: hashedPassword, emailCode: "", emailCodeTimeout: 0, emailCodeAttempts: MAX_EMAIL_CODE_ATTEMPTS }, dbResult[0].user_id);
   if (err) {
     return res.status(500).json({ message: 'Failed to reset password', error: err });
   }
@@ -237,6 +359,14 @@ expressServer.post('/api/v1/user/reset-password', async (req: any, res: any) => 
   res.status(200).json({ message: 'Password reset successfully' });
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Delete account with token...
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Logout of account with token...
+
+// TODO: Fix HTTP status codes from all being 500...
+// TODO: Make code consistent amount of typescript
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Make sure that any request that does not matches a static file
