@@ -132,8 +132,8 @@ async function updateUser(updateParams: UpdateUserParams, userID: string): Promi
   }
   // Construct the dynamic query.
   const updateUserQuery = `UPDATE user_data 
-                           SET ${fieldsToUpdate.join(", ")} 
-                           WHERE user_id = ?`;
+                             SET ${fieldsToUpdate.join(", ")} 
+                             WHERE user_id = ?`;
   // Validate string fields to be correct length.
   const fieldsToValidate = Object.fromEntries(
     Object.entries(updateParams).filter(([_, value]) => (typeof value === 'string' && value !== undefined))
@@ -154,8 +154,8 @@ async function updateUser(updateParams: UpdateUserParams, userID: string): Promi
 // Get user based on email and return their info.
 async function getUserFromEmail(email: string): Promise<[string|null, any]> {
   const getUserQuery = `SELECT user_id, first_name, last_name, password, email_verified, email_code, email_code_timeout, email_code_attempts
-                              FROM user_data 
-                              WHERE email = ?`;
+                          FROM user_data 
+                          WHERE email = ?`;
   // Validate string fileds to be correct length.
   const validationError = validateStringFieldLengths({ email });
   if (validationError) {
@@ -170,6 +170,24 @@ async function getUserFromEmail(email: string): Promise<[string|null, any]> {
   }
 }
 
+// Get user based on email and return their info.
+async function deleteUser(userId: string): Promise<[string|null, any]> {
+  const deleteUserQuery = `DELETE FROM user_data 
+                             WHERE user_id = ?`;
+  // Validate string fileds to be correct length.
+  const validationError = validateStringFieldLengths({ userId });
+  if (validationError) {
+    return [ validationError, null ];
+  }
+  // Query database.
+  try {
+    const results = await query(deleteUserQuery, [userId]);
+    return [ null, results ];
+  } catch (err: any) {
+    return [ err, null ]
+  }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function exports for 'database.ts'.
@@ -177,4 +195,5 @@ export {
   addUser,
   updateUser,
   getUserFromEmail,
+  deleteUser,
 };

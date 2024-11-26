@@ -7,7 +7,7 @@ import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
-import { addUser, updateUser, getUserFromEmail } from './database';
+import { addUser, updateUser, getUserFromEmail, deleteUser } from './database';
 import { devServerPort } from './config';
 
 
@@ -48,23 +48,23 @@ const transporter = nodemailer.createTransport({
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Middleware function to call in API endpoints for JWT authentication.
 function authenticateToken(req: any, res: any, next: any) {
-  const authHeader = req.headers['authorization'];
+  const authHeader: string | undefined = req.headers['authorization'];
   if (!authHeader) // No token at all.
   {
-    return res.sendStatus(401);
+    return res.status(400).json({ message: 'Did not find token Authorization header' });
   }
-  const token = authHeader.split(' ')[1];
+  const token: string | undefined = authHeader.split(' ')[1];
   if (!token) // Doesn't have correct format.
   {
-    return res.sendStatus(401);
+    return res.status(400).json({ message: 'Incorrect format of token Authorization header' });
   }
   jwt.verify(token, process.env.JWT_SECRET!, (err: any, token: any) => {
     if (err)  // Invalid token.
     {
-      return res.sendStatus(403);
+      return res.status(401).json({ message: 'Invalid token', error: err });
     }
     // Any endpoints using this middleware have access to token information.
-    // req.token, for example req.token._id or req.token.name.
+    // For example 'req.token.userId' or 'req.token.firstName'.
     req.token = token;
     next();
   });
@@ -97,30 +97,38 @@ function isValidPassword(password: string): boolean {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
+// Function to conditionally send response status and message.
+function respondIf(condition: boolean, res: any, statusCode: any = 401, message: string = 'Unauthorized', error: string = "") {
+  if (condition) {
+    return res.status(statusCode).json({ message: message, error: error });
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
 // Register endpoint
 expressServer.post('/api/v1/user/register', async (req: any, res: any) => {
   const { firstName, lastName, email, password } = req.body;
 
   const [ getErr, dbResult ] = await getUserFromEmail(email);
   if (getErr || dbResult.length > 0) {
-    return res.status(500).json({ message: 'Account already exists with email', error: getErr });
+    return res.status(403).json({ message: 'Account already exists with email', error: getErr });
   }
 
   if (!isValidPassword(password)) {
-    return res.status(500).json({ message: 'Password does not meet requirements' });
+    return res.status(400).json({ message: 'Password does not meet requirements' });
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isValidEmail = emailRegex.test(email);
   if (!isValidEmail) {
-    return res.status(500).json({ message: 'Email does not meet requirements' });
+    return res.status(400).json({ message: 'Email does not meet requirements' });
   }
 
   const nameRegex = /^[a-zA-Z]+([ '-][a-zA-Z]+)*$/;
   const isValidFirstName = nameRegex.test(firstName);
   const isValidLastName = nameRegex.test(lastName);
   if (!isValidFirstName || !isValidLastName) {
-    return res.status(500).json({ message: 'Names must be non-empty, alphabetic fields with spaces and dashes' });
+    return res.status(400).json({ message: 'Names must be non-empty, alphabetic fields with spaces and dashes' });
   }
   const formattedFirstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
   const formattedLastName = lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
@@ -138,7 +146,6 @@ expressServer.post('/api/v1/user/register', async (req: any, res: any) => {
     return res.status(500).json({ message: 'Registration failed', error: err });
   }
 
-  // Respond to client
   res.status(201).json({ message: 'User registered successfully.' });
 });
 
@@ -149,11 +156,11 @@ expressServer.post('/api/v1/user/send-verification-code', async (req: any, res: 
   
   const [ getErr, dbResult ] = await getUserFromEmail(email);
   if (getErr || dbResult.length === 0) {
-    return res.status(500).json({ message: 'Failed to find associated account', error: getErr });
+    return res.status(400).json({ message: 'Failed to find associated account', error: getErr });
   }
 
   if (dbResult[0].email_verified) {
-    return res.status(500).json({ message: 'Account already verified' });
+    return res.status(204).json({ message: 'Account already verified' });
   }
 
   // Only a new code on a redirect that has a timed out code, or a press of resend code button
@@ -183,7 +190,7 @@ expressServer.post('/api/v1/user/send-verification-code', async (req: any, res: 
     if (err) {
       return res.status(500).json({ message: 'Error sending verification email', error: err.message });
     }
-    res.status(201).json({ message: 'Please check your email for verification.' });
+    res.status(201).json({ message: 'Please check your email for verification' });
   });
 });
 
@@ -194,23 +201,23 @@ expressServer.post('/api/v1/user/check-verification-code', async (req: any, res:
   
   const [ getErr, dbResult ] = await getUserFromEmail(email);
   if (getErr || dbResult.length === 0) {
-    return res.status(500).json({ message: 'Failed to find associated account', error: getErr });
+    return res.status(400).json({ message: 'Failed to find associated account', error: getErr });
   }
 
   if (dbResult[0].email_verified) {
-    return res.status(500).json({ message: 'Account already verified' });
+    return res.status(204).json({ message: 'Account already verified' });
   }
 
   // If code is timed out, frontend will remove submit button and prompt user to press resend code
   const isCodeTimedOut: boolean = dbResult[0].email_code_timeout < (Date.now() / 1000);
   if (isCodeTimedOut) {
-    return res.status(500).json({ message: 'Email verification code timed out'});
+    return res.status(401).json({ message: 'Email verification code timed out'});
   }
 
   // If all attempts used, frontend will remove submit button and prompt user to press resend code
   const isAttemptsRemaining: boolean = dbResult[0].email_code_attempts < MAX_EMAIL_CODE_ATTEMPTS;
   if (!isAttemptsRemaining) {
-    return res.status(500).json({ message: `Attempt rejected, all ${MAX_EMAIL_CODE_ATTEMPTS} email code attempts used` })
+    return res.status(401).json({ message: `Attempt rejected, all ${MAX_EMAIL_CODE_ATTEMPTS} email code attempts used` })
   }
   const numAttempts = dbResult[0].email_code_attempts + 1;
   const [ updateAttemptErr, _updateAttemptResult ] = await updateUser({ emailCodeAttempts: numAttempts }, dbResult[0].user_id);
@@ -220,7 +227,7 @@ expressServer.post('/api/v1/user/check-verification-code', async (req: any, res:
 
   const isValidCode: boolean = (emailCode == dbResult[0].email_code);
   if (!isValidCode) {
-    return res.status(500).json({ message: 'Failed to validate verification code', error: 'Codes do not match'});
+    return res.status(401).json({ message: 'Incorrect email verification code', error: 'Codes do not match'});
   }
 
   // Update email_verified in the database
@@ -245,7 +252,7 @@ expressServer.post('/api/v1/user/login', async (req: any, res: any) => {
 
   // If email is not verified, will redirect user to verify page
   if (!dbResult[0].email_verified) {
-    return res.status(401).json({ message: 'Email not verified yet'});
+    return res.status(403).json({ message: 'Email not verified yet'});
   }
 
   const isPasswordCorrect = await bcrypt.compare(password, dbResult[0].password);
@@ -277,7 +284,7 @@ expressServer.post('/api/v1/user/send-password-reset-code', async (req: any, res
 
   // If email is not verified, will redirect user to verify page
   if (!dbResult[0].email_verified) {
-    return res.status(401).json({ message: 'Email not verified yet'});
+    return res.status(403).json({ message: 'Email not verified yet'});
   }
 
   // NOTE: Since we redirect immediately if not verified, we can use emailCode fields
@@ -321,18 +328,18 @@ expressServer.post('/api/v1/user/check-password-reset-code', async (req: any, re
   
   const [ getErr, dbResult ] = await getUserFromEmail(email);
   if (getErr || dbResult.length === 0) {
-    return res.status(500).json({ message: 'Failed to find associated account', error: getErr });
+    return res.status(400).json({ message: 'Failed to find associated account', error: getErr });
   }
 
   // If code is timed out, frontend will remove submit button and prompt user to press resend code
   const isCodeTimedOut: boolean = dbResult[0].email_code_timeout < (Date.now() / 1000)
   if (isCodeTimedOut) {
-    return res.status(500).json({ message: 'Email verification code timed out'})
+    return res.status(401).json({ message: 'Email verification code timed out'})
   }
 
   const isAttemptsRemaining: boolean = dbResult[0].email_code_attempts < MAX_EMAIL_CODE_ATTEMPTS;
   if (!isAttemptsRemaining) {
-    return res.status(500).json({ message: `Attempt rejected, all ${MAX_EMAIL_CODE_ATTEMPTS} email code attempts used` })
+    return res.status(401).json({ message: `Attempt rejected, all ${MAX_EMAIL_CODE_ATTEMPTS} email code attempts used` })
   }
   const numAttempts = dbResult[0].email_code_attempts + 1;
   const [ updateAttemptErr, _updateAttemptResult ] = await updateUser({ emailCodeAttempts: numAttempts }, dbResult[0].user_id);
@@ -342,11 +349,11 @@ expressServer.post('/api/v1/user/check-password-reset-code', async (req: any, re
 
   const isValidCode: boolean = emailCode === dbResult[0].email_code;
   if (!isValidCode) {
-    return res.status(500).json({ message: 'Failed to validate verification code' });
+    return res.status(401).json({ message: 'Failed to validate verification code' });
   }
 
   if (!isValidPassword(newPassword)) {
-    return res.status(500).json({ message: 'Password does not meet requirements' });
+    return res.status(401).json({ message: 'Password does not meet requirements' });
   }
   const hashedPassword = await hashPassword(newPassword);
 
@@ -360,13 +367,21 @@ expressServer.post('/api/v1/user/check-password-reset-code', async (req: any, re
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// TODO: Delete account with token...
+// Delete user endpoint
+expressServer.post('/api/v1/user/delete-user', authenticateToken, async (req: any, res: any) => {
+  const userId: string = req.token.userId; 
 
-///////////////////////////////////////////////////////////////////////////////////////////
-// TODO: Logout of account with token...
+  const [ err, _results ] = await deleteUser(userId);
+  if (err) {
+    return res.status(500).json({ message: 'Failed to delete user', error: err });
+  }
+  res.status(200).json({ message: 'Deleted user successfully' });
+});
 
-// TODO: Fix HTTP status codes from all being 500...
+
 // TODO: Make code consistent amount of typescript
+// TODO: Refreshing tokens...?
+// TODO: Try respondIf function to cleanup code
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Make sure that any request that does not matches a static file
