@@ -1,4 +1,4 @@
-import './loading.css'
+import './Loading.css'
 
 export default function Loading() {
 

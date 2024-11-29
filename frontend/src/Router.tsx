@@ -7,8 +7,11 @@ import AuthProtectedRoutesLayout from './layouts/AuthProtectedRoutesLayout'
 // Page Imports
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
-import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
+import SendPasswordResetPage from './pages/SendPasswordResetPage'
+import ValidatePasswordResetPage from './pages/ValidatePasswordResetPage'
 import DashboardPage from './pages/DashboardPage'
 import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -25,8 +28,11 @@ export default function createRouter() {
         children: [
           { path: '/', element: <HomePage /> },
           { path: '/about', element: <AboutPage /> },
-          { path: '/sign-in', element: <LoginPage /> },
-          { path: '/sign-up', element: <RegisterPage /> },
+          { path: '/login', element: <LoginPage /> },
+          { path: '/register', element: <RegisterPage /> },
+          { path: '/verify-email', element: <VerifyEmailPage /> },
+          { path: '/send-password-reset', element: <SendPasswordResetPage /> },
+          { path: '/validate-password-reset', element: <ValidatePasswordResetPage /> },
           {
             element: <AuthProtectedRoutesLayout />,
             path: '/dashboard',

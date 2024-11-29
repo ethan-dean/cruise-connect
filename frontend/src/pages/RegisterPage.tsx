@@ -4,7 +4,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AuthContext } from "../contexts/AuthContext";
 
 export default function RegisterPage() {
-  const { login, isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated } = useContext(AuthContext);
 
   if (isAuthenticated) {
     return <Navigate to='/dashboard' />;
@@ -17,23 +17,56 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // TODO: register function (replace with real registration logic)
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
-    if (firstName && lastName && email && password) {
-      login('temp-jwt-token');
-      navigate('/dashboard');
-    } else {
-      setError('Please fill out all fields');
+    // Check for errors in any of the inputs.
+    let inputError: string = '';
+    if (/^[a-zA-Z]+([ '-][a-zA-Z]+)*$/.test(firstName)) {
+      inputError += 'Please enter a valid first name (alphabetic characters, spaces, and dashes<br>';
+    }
+    if (/^[a-zA-Z]+([ '-][a-zA-Z]+)*$/.test(lastName)) {
+      inputError += 'Please enter a valid last name (alphabetic characters, spaces, and dashes<br>';
+    }
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      inputError += 'Please enter a valid email<br>';
+    }
+    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&amp;*])[A-Za-z\d!@#$%^&amp;*]{8,50}/.test(password)) {
+      inputError += 'Please enter a valid password<br>';
+    }
+    if (inputError) {
+      setError(inputError);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/v1/user/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ firstName, lastName, email, password }),
+      });
+
+      if (response.ok) {
+        setError('');
+        // Save email for access in VerifyEmailPage.
+        localStorage.setItem('userEmail', email);
+        navigate('/verify-email');
+      } else {
+        const data = await response.json();
+        // Handle server response if it's not 200 range OK.
+        setError(data.message || 'Server connection error, try again later...');
+      }
+    } catch (error) {
+      // Handle fetch errors.
+      setError('Server connection error, try again later...');
     }
   };
 
   return (
     <div className="register-page">
       <h1 className="register-page__title">Register</h1>
-      {error && <div className="register-page__error">{error}</div>}
       
       <form className="register-page__form" onSubmit={handleRegister}>
         <div className="register-page__form-group">
@@ -84,8 +117,11 @@ export default function RegisterPage() {
           />
         </div>
 
+        {error && <div className="register-page__error">{error}</div>}
+
         <button type="submit" className="register-page__button">Register</button>
       </form>
+      <p>Already have an account? <span onClick={() => navigate('/register')}>Login here.</span></p>
     </div>
   );
 };

@@ -21,8 +21,8 @@ export default function HeaderLayout() {
               </>)
             :
               (<>
-                <Link className='header-sign-in' to='/sign-in'>Sign-In</Link>
-                <Link className='header-sign-up' to='/sign-up'>Sign-Up</Link>
+                <Link className='header-login' to='/login'>Login</Link>
+                <Link className='header-register' to='/register'>Register</Link>
               </>)
           }
         </div>

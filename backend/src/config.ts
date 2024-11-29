@@ -7,7 +7,6 @@ dotenv.config()
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function exports for 'database.ts'.
-// Constants set in docker, "compose.yaml".
 
 const dbConnectionConfig = {
   host: process.env.DB_HOST,
