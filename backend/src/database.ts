@@ -79,7 +79,7 @@ function query(sql: string, params: any[]): Promise<any> {
 
 function validateStringFieldLengths(stringFields: Object) {
   for (const [fieldName, value] of Object.entries(stringFields)) {
-    if (value.length > maxStringLength) {
+    if (typeof value === 'string' && value.length > maxStringLength) {
       return `stringLengthError: <${fieldName}> must be ${maxStringLength} characters or fewer.`;
     }
   }

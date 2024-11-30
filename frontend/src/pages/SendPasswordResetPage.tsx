@@ -1,12 +1,24 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useContext } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 
+import { AuthContext } from '../contexts/AuthContext'
 import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup'
+import '../css/SendPasswordResetPage.css'
 
 export default function SendPasswordResetPage() {
+  const { isAuthenticated } = useContext(AuthContext);
+
+  if (isAuthenticated) {
+    return <Navigate to='/dashboard' />;
+  }
+
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+
+  const [emailError, setEmailError] = useState<string>('');
+  const [generalError, setGeneralError] = useState<string>('');
+
   const [showNotVerifiedPopup, setShowNotVerifiedPopup] = useState(false);
+
   const navigate = useNavigate();
 
   // Send code to user's email.
@@ -21,71 +33,87 @@ export default function SendPasswordResetPage() {
       });
 
       if (response.ok) {
-        setError('');
+        setGeneralError('');
         // Save email for access in ValidatePasswordResetPage.
         localStorage.setItem('userEmail', email);
         navigate('/validate-password-reset')
       } else {
         // Handle server response if it's not 200 range OK.
         const data = await response.json();
-        if (data.err === 'ACCOUNT_NOT_VERIFIED') {
+        if (data.error === 'ACCOUNT_NOT_VERIFIED') {
           // Save email for access in VerifyEmailPage.
           localStorage.setItem('userEmail', email);
           setShowNotVerifiedPopup(true);
         }
-        setError(data.message || 'Server connection error, try again later...');
+        setGeneralError(data.message || 'Server connection error, try again later...');
       }
     } catch (error) {
       // Handle fetch errors.
-      setError('Server connection error, try again later...');
+      setGeneralError('Server connection error, try again later...');
     }
+  };
+
+  // Validation functions
+  const validateEmail = (value: string): string => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!value.trim()) {
+      return 'Email is required.';
+    } else if (!emailRegex.test(value)) {
+      return 'Please enter a valid email address.';
+    } else if (value.length > 50) {
+      return 'Email can\'t be over 50 characters.';
+    }
+    return '';
+  };
+
+  // Handle input changes with validation
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    setEmailError(validateEmail(value));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check for errors in any of the inputs.
-    let inputError: string = '';
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      inputError += 'Please enter a valid email<br>';
-    }
-    if (inputError) {
-      setError(inputError);
+    // Final validation before submission
+    const emailErr = validateEmail(email);
+
+    setEmailError(emailErr);
+
+    if (emailErr) {
       return;
     }
 
     sendEmailCode();
   };
-
   return (
-    <div>
-      <h1>Reset your Password</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">Enter the email of your account:</label>
+    <div className="send-password-reset-page">
+      <h1 className="send-password-reset-page__title">Reset your Password</h1>
+      <form className="send-password-reset-page__form" onSubmit={handleSubmit} noValidate>
+        <div className="send-password-reset-page__form-group">
+          <label htmlFor="email" className="send-password-reset-page__label">Enter the email of your account:</label>
           <input
             type="email"
             id="email"
+            className={`send-password-reset-page__input ${emailError ? 'send-password-reset-page__input--error' : ''}`}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => handleEmailChange(e.target.value)}
             maxLength={60}
-            pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
-            placeholder="example@mail.com"
-            required
           />
+          {emailError && <div id="emailError" className="send-password-reset-page__field-error">{emailError}</div>}
         </div>
-        {error && <p>{error}</p>}
-        <button type="submit">
-          Submit
-        </button>
+
+        {generalError && <p className="send-password-reset-page__error">{generalError}</p>}
+
+        <button type="submit" className="send-password-reset-page__button">Submit</button>
       </form>
 
       {/* Conditionally render the "Countdown Popup" in case a user is already verified */}
       {showNotVerifiedPopup && (
         <CountdownPopup
           displayText="Your account is not yet verified, being redirected to verification page..."
-          countdownTimeSeconds={5} // countdown from 10 seconds
-          navigateDestination="/login"
+          countdownTimeSeconds={5} // countdown from 5 seconds
+          navigateDestination="/verify-email"
         />
       )}
     </div>

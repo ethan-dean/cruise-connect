@@ -7,7 +7,7 @@ export default function AuthProtectedRoutesLayout() {
     const { isAuthenticated } = useContext(AuthContext);
 
     if (!isAuthenticated) {
-      return <Navigate to='/sign-in' />;
+      return <Navigate to='/' />;
     }
 
     return (

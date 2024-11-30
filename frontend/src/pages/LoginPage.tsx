@@ -1,7 +1,9 @@
 import { useState, useContext } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, Link } from "react-router-dom";
 
 import { AuthContext } from "../contexts/AuthContext";
+import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup'
+import '../css/LoginPage.css'
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useContext(AuthContext);
@@ -12,27 +14,59 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
+
+  const [emailError, setEmailError] = useState<string>('');
+  const [passwordError, setPasswordError] = useState<string>('');
+  const [generalError, setGeneralError] = useState<string>('');
+
+  const [showNotVerifiedPopup, setShowNotVerifiedPopup] = useState(false);
+
   const navigate = useNavigate();
+
+  // Validation functions
+  const validateEmail = (value: string): string => {
+    if (!value.trim()) {
+      return 'Email is required.';
+    } else if (value.length > 50) {
+      return 'Email can\'t be over 50 characters.';
+    }
+    return '';
+  };
+  const validatePassword = (value: string): string => {
+    if (!value) {
+      return 'Password is required.';
+    } else if (value.length > 50) {
+      return 'Password can\'t be over 50 characters.';
+    }
+    return '';
+  };
+
+  // Handle input changes with validation
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    setEmailError(validateEmail(value));
+  };
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setPasswordError(validatePassword(value));
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check for errors in any of the inputs.
-    let inputError: string = '';
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      inputError += 'Please enter a valid email<br>';
-    }
-    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&amp;*])[A-Za-z\d!@#$%^&amp;*]{8,50}/.test(password)) {
-      inputError += 'Please enter a valid password<br>';
-    }
-    if (inputError) {
-      setError(inputError);
+    // Final validation before submission
+    const emailErr = validateEmail(email);
+    const passwordErr = validatePassword(password);
+
+    setEmailError(emailErr);
+    setPasswordError(passwordErr);
+
+    if (emailErr || passwordErr) {
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/v1/user/register', {
+      const response = await fetch('http://localhost:5000/api/v1/user/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,7 +75,7 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        setError('');
+        setGeneralError('');
         const data = await response.json();
         // Use AuthContext to mark user as logged in and store the JWT token in localStorage.
         login(data.token);
@@ -49,19 +83,67 @@ export default function LoginPage() {
       } else {
         // Handle server response if it's not 200 range OK.
         const data = await response.json();
-        if (data.err === 'ACCOUNT_NOT_VERIFIED') {
+        if (data.error === 'ACCOUNT_NOT_VERIFIED') {
           // Save email for access in VerifyEmailPage.
           localStorage.setItem('userEmail', email);
-          navigate('/verify-email');
+          setShowNotVerifiedPopup(true);
         }
-        setError(data.message || 'Server connection error, try again later...');
+        setGeneralError(data.message || 'Server connection error, try again later...');
       }
     } catch (error) {
       // Handle fetch errors.
-      setError('Server connection error, try again later...');
+      setGeneralError('Server connection error, try again later...');
     }
   };
 
+  return (
+    <div className="login-page">
+      <h1 className="login-page__title">Login</h1>
+      
+      <form className="login-page__form" onSubmit={handleLogin} noValidate>
+        <div className="login-page__form-group">
+          <label htmlFor="email" className="login-page__label">Email:</label>
+          <input
+            type="email"
+            id="email"
+            className={`login-page__input ${emailError ? 'login-page__input--error' : ''}`}
+            value={email}
+            onChange={(e) => handleEmailChange(e.target.value)}
+            maxLength={50}
+          />
+          {emailError && <div id="emailError" className="login-page__field-error">{emailError}</div>}
+        </div>
+
+        <div className="login-page__form-group">
+          <label htmlFor="password" className="login-page__label">Password:</label>
+          <input
+            type="password"
+            id="password"
+            className={`login-page__input ${passwordError ? 'login-page__input--error' : ''}`}
+            value={password}
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            maxLength={50}
+          />
+          {passwordError && <div id="passwordError" className="login-page__field-error">{passwordError}</div>}
+        </div>
+
+        {generalError && <div className="login-page__error">{generalError}</div>}
+
+        <button type="submit" className="login-page__button">Login</button>
+      </form>
+      <p className="login-page__info">Don't have an account? <Link to='/register' className="login-page__link">Register here.</Link></p>
+      <p className="login-page__info">Forgot your password? <Link to='/send-password-reset' className="login-page__link">Reset it here.</Link></p>
+
+      {/* Conditionally render the "Countdown Popup" in case a user is already verified */}
+      {showNotVerifiedPopup && (
+        <CountdownPopup
+          displayText="Your account is not yet verified, being redirected to verification page..."
+          countdownTimeSeconds={5} // countdown from 5 seconds
+          navigateDestination="/verify-email"
+        />
+      )}
+    </div>
+  );
   return (
     <div className="login-page">
       <h1 className="login-page__title">Login</h1>
@@ -74,9 +156,10 @@ export default function LoginPage() {
             id="email"
             className="login-page__input"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+            onChange={(e) => handleEmailChange(e.target.value)}
+            maxLength={50}
           />
+          {emailError && <div className="register-page__field-error">{emailError}</div>}
         </div>
 
         <div className="login-page__form-group">
@@ -86,17 +169,27 @@ export default function LoginPage() {
             id="password"
             className="login-page__input"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+            onChange={(e) => handlePasswordChange(e.target.value)}
+            maxLength={50}
           />
+          {passwordError && <div className="register-page__field-error">{passwordError}</div>}
         </div>
 
-        {error && <div className="login-page__error">{error}</div>}
+        {generalError && <div className="login-page__error">{generalError}</div>}
 
         <button type="submit" className="login-page__button">Login</button>
       </form>
-      <p>Don't have an account? <span onClick={() => navigate('/register')}>Register here.</span></p>
-      <p>Forgot your password? <span onClick={() => navigate('/send-password-reset')}>Reset it here.</span></p>
+      <p>Don't have an account? <Link to='/register'>Register here.</Link></p>
+      <p>Forgot your password? <Link to='/send-password-reset'>Reset it here.</Link></p>
+
+      {/* Conditionally render the "Countdown Popup" in case a user is already verified */}
+      {showNotVerifiedPopup && (
+        <CountdownPopup
+          displayText="Your account is not yet verified, being redirected to verification page..."
+          countdownTimeSeconds={5} // countdown from 10 seconds
+          navigateDestination="/verify-email"
+        />
+      )}
     </div>
   );
 };

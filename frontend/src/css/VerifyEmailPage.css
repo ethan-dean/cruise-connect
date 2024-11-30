@@ -1,0 +1,129 @@
+.verify-email-page {
+  background-color: #ffffff;
+  padding: 40px 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  box-sizing: border-box;
+}
+
+.verify-email-page__title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333333;
+}
+
+.verify-email-page__info {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #555555;
+  font-size: 14px;
+}
+
+.verify-email-page__form-group {
+  margin-bottom: 20px;
+}
+
+.verify-email-page__label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555555;
+  font-size: 14px;
+}
+
+.verify-email-page__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+.verify-email-page__input:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+.verify-email-page__input--error {
+  border-color: #e74c3c;
+}
+
+.verify-email-page__field-error {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.verify-email-page__error {
+  margin-bottom: 20px;
+  color: #e74c3c;
+  font-size: 14px;
+  text-align: center;
+}
+
+.verify-email-page__button {
+  width: 100%;
+  padding: 12px;
+  background-color: #4a90e2;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.verify-email-page__button:hover {
+  background-color: #357abd;
+}
+
+.verify-email-page__submit-section {
+  margin-top: 20px;
+}
+
+.verify-email-page__resend {
+  text-align: center;
+  margin-top: 20px;
+  color: #666666;
+  font-size: 14px;
+}
+
+.verify-email-page__resend-link {
+  color: #4a90e2;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.verify-email-page__resend-link:hover {
+  text-decoration: underline;
+}
+
+.verify-email-page__resend-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.verify-email-page__resend-button {
+  padding: 10px 20px;
+  background-color: #4a90e2;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.verify-email-page__resend-button:hover {
+  background-color: #357abd;
+}
+
+/* Responsive Design */
+@media (max-width: 500px) {
+  .verify-email-page {
+    width: 90%;
+    padding: 30px 20px;
+  }
+}

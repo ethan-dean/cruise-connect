@@ -116,11 +116,11 @@ expressServer.post('/api/v1/user/register', async (req: any, res: any) => {
   // Validate password requirements.
   if (respondIf(!isValidPassword(password), res, 400, 'Password does not meet requirements')) return;
   // Validate email is in valid format.
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^(?=.{1,50}$)[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isValidEmail = emailRegex.test(email);
   if (respondIf(!isValidEmail, res, 400, 'Email does not meet requirements')) return;
-  // Validate names are in valid format (alphabetic characters with spaces and dashes).
-  const nameRegex = /^[a-zA-Z]+([ '-][a-zA-Z]+)*$/;
+  // Validate names are in valid format.
+  const nameRegex = /^.{1,50}$/;
   const isValidFirstName: boolean = nameRegex.test(firstName);
   const isValidLastName: boolean = nameRegex.test(lastName);
   if (respondIf(!isValidFirstName || !isValidLastName, res, 400, 'Names do not meet requirements')) return;
