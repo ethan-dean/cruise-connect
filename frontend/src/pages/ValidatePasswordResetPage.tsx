@@ -1,8 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import { AuthContext } from '../contexts/AuthContext'
-import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup'
+import { AuthContext } from '../contexts/AuthContext';
+import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup';
+import getBackendUrl from '../utils/getBackendUrl';
 import '../css/ValidatePasswordResetPage.css';
 
 export default function ValidatePasswordResetPage() {
@@ -28,7 +29,7 @@ export default function ValidatePasswordResetPage() {
   // Send code to user's email.
   const sendEmailCode = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/user/send-password-reset-code', {
+      const response = await fetch(`${getBackendUrl()}/api/v1/user/send-password-reset-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +134,7 @@ export default function ValidatePasswordResetPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/v1/user/check-password-reset-code', {
+      const response = await fetch(`${getBackendUrl()}/api/v1/user/check-password-reset-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

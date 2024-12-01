@@ -2,8 +2,9 @@ import { useState, useContext } from "react";
 import { Navigate, useNavigate, Link } from "react-router-dom";
 
 import { AuthContext } from "../contexts/AuthContext";
-import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup'
-import '../css/LoginPage.css'
+import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup';
+import getBackendUrl from '../utils/getBackendUrl';
+import '../css/LoginPage.css';
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useContext(AuthContext);
@@ -66,7 +67,7 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/v1/user/login', {
+      const response = await fetch(`${getBackendUrl()}/api/v1/user/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +76,6 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        setGeneralError('');
         const data = await response.json();
         // Use AuthContext to mark user as logged in and store the JWT token in localStorage.
         login(data.token);

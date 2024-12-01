@@ -211,7 +211,13 @@ expressServer.post('/api/v1/user/check-verification-code', async (req: any, res:
   const [ err, _result ] = await updateUser({ emailVerified: true, emailCode: "", emailCodeTimeout: 0, emailCodeAttempts: MAX_EMAIL_CODE_ATTEMPTS }, getUserResult[0].user_id);
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
 
-  res.status(200).json({ message: 'Verified email successfully' });
+  // Generate JWT.
+  const token = jwt.sign(
+    { userId: getUserResult[0].user_id, email: getUserResult[0].email, firstName: getUserResult[0].first_name, lastName: getUserResult[0].last_name },
+    process.env.JWT_SECRET!,
+    { expiresIn: "24h" }
+  );
+  res.status(200).json({ message: 'Verified email successfully', token });
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +242,6 @@ expressServer.post('/api/v1/user/login', async (req: any, res: any) => {
     process.env.JWT_SECRET!,
     { expiresIn: "24h" }
   );
-
   res.status(200).json({ message: 'Login successful', token });
 });
 
@@ -332,8 +337,7 @@ expressServer.post('/api/v1/user/delete-user', authenticateToken, async (req: an
   res.status(204).json({ message: 'Deleted user successfully' });
 });
 
-// TODO: Refreshing tokens...?
-// TODO: Allow login on registration by returning token on email verification...?
+// TODO: Refresh tokens stored in cookies, and shorten access token length to 15m
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////

@@ -2,11 +2,12 @@ import { useState, useEffect, useContext } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import { AuthContext } from "../contexts/AuthContext";
-import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup'
-import '../css/VerifyEmailPage.css'
+import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup';
+import getBackendUrl from '../utils/getBackendUrl';
+import '../css/VerifyEmailPage.css';
 
 export default function VerifyEmailPage() {
-  const { isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated, login } = useContext(AuthContext);
 
   if (isAuthenticated) {
     return <Navigate to='/dashboard' />;
@@ -26,7 +27,7 @@ export default function VerifyEmailPage() {
   // Send code to user's email.
   const sendEmailCode = async ({ destinationEmail = email, forceResend = false }: { destinationEmail?: string, forceResend?: boolean}) => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/user/send-verification-code', {
+      const response = await fetch(`${getBackendUrl()}/api/v1/user/send-verification-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +100,7 @@ export default function VerifyEmailPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/v1/user/check-verification-code', {
+      const response = await fetch(`${getBackendUrl()}/api/v1/user/check-verification-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,7 +109,10 @@ export default function VerifyEmailPage() {
       });
 
       if (response.ok) {
-        navigate('/login');
+        const data = await response.json();
+        // Use AuthContext to mark user as logged in and store the JWT token in localStorage.
+        login(data.token);
+        navigate('/dashboard');
       } else {
         // Handle server response if it's not 200 range OK.
         const data = await response.json();

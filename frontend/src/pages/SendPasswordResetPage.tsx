@@ -1,9 +1,10 @@
 import { useState, useContext } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import { AuthContext } from '../contexts/AuthContext'
-import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup'
-import '../css/SendPasswordResetPage.css'
+import { AuthContext } from '../contexts/AuthContext';
+import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup';
+import getBackendUrl from '../utils/getBackendUrl';
+import '../css/SendPasswordResetPage.css';
 
 export default function SendPasswordResetPage() {
   const { isAuthenticated } = useContext(AuthContext);
@@ -24,7 +25,7 @@ export default function SendPasswordResetPage() {
   // Send code to user's email.
   const sendEmailCode = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/v1/user/send-password-reset-code', {
+      const response = await fetch(`${getBackendUrl()}/api/v1/user/send-password-reset-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
