@@ -29,7 +29,7 @@ export default function ValidatePasswordResetPage() {
   // Send code to user's email.
   const sendEmailCode = async () => {
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/user/send-password-reset-code`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/send-password-reset-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ export default function ValidatePasswordResetPage() {
     }
 
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/user/check-password-reset-code`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/check-password-reset-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

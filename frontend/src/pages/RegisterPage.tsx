@@ -117,7 +117,7 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/user/register`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

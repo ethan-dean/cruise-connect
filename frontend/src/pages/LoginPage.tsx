@@ -67,7 +67,7 @@ export default function LoginPage() {
     }
 
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/user/login`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -27,7 +27,7 @@ export default function VerifyEmailPage() {
   // Send code to user's email.
   const sendEmailCode = async ({ destinationEmail = email, forceResend = false }: { destinationEmail?: string, forceResend?: boolean}) => {
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/user/send-verification-code`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/send-verification-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ export default function VerifyEmailPage() {
     }
 
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/user/check-verification-code`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/check-verification-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

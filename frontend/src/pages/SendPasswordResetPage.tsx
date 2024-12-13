@@ -25,7 +25,7 @@ export default function SendPasswordResetPage() {
   // Send code to user's email.
   const sendEmailCode = async () => {
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/user/send-password-reset-code`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/send-password-reset-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
