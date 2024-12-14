@@ -33,6 +33,7 @@ function setupDatabase() {
     console.log('Available Databases:', results);
   });
 
+  // TODO: Make table use camelCase so updateUser doesn't have to be weird
   // Create user_data table if it does not exist
   const createUserTableQuery = `
     CREATE TABLE IF NOT EXISTS user_data (
@@ -171,6 +172,25 @@ async function getUserFromEmail(email: string): Promise<[string|null, any]> {
 }
 
 // Get user based on email and return their info.
+async function getUserFromId(userId: string): Promise<[string|null, any]> {
+  const getUserQuery = `SELECT first_name, last_name, email, password, email_verified, email_code, email_code_timeout, email_code_attempts
+                          FROM user_data 
+                          WHERE user_id = ?`;
+  // Validate string fileds to be correct length.
+  const validationError = validateStringFieldLengths({ userId });
+  if (validationError) {
+    return [ validationError, null ];
+  }
+  // Query database.
+  try {
+    const results = await query(getUserQuery, [userId]);
+    return [ null, results ];
+  } catch (err: any) {
+    return [ err, null ]
+  }
+}
+
+// Get user based on email and return their info.
 async function deleteUser(userId: string): Promise<[string|null, any]> {
   const deleteUserQuery = `DELETE FROM user_data 
                              WHERE user_id = ?`;
@@ -195,5 +215,6 @@ export {
   addUser,
   updateUser,
   getUserFromEmail,
+  getUserFromId,
   deleteUser,
 };

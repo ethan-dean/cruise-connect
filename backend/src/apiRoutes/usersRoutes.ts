@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 
 import authenticateToken from '../utils/authenticateToken';
 import getMailer from '../utils/getMailer';
-import { addUser, updateUser, getUserFromEmail, deleteUser } from '../database';
+import { addUser, updateUser, getUserFromEmail, getUserFromId, deleteUser } from '../database';
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Secrets and constants.
@@ -15,7 +15,7 @@ const MAX_EMAIL_CODE_ATTEMPTS: number = 5;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Initialize server app.
-const authRouter = express.Router();
+const usersRouter = express.Router();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Util function to hash and salt passwords (in case of data leaks).
@@ -53,7 +53,7 @@ function respondIf(condition: boolean, response: any, statusCode: number, messag
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Register endpoint.
-authRouter.post('/register', async (req: any, res: any) => {
+usersRouter.post('/register', async (req: any, res: any) => {
   const { firstName, lastName, email, password } = req.body;
 
   // Validate account with email does not already exist.
@@ -91,7 +91,7 @@ authRouter.post('/register', async (req: any, res: any) => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Send verification code endpoint.
-authRouter.post('/send-verification-code', async (req: any, res: any) => {
+usersRouter.post('/send-verification-code', async (req: any, res: any) => {
   const { email, forceResend } = req.body;
   
   // Validate account exists, get user data.
@@ -129,7 +129,7 @@ authRouter.post('/send-verification-code', async (req: any, res: any) => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Check verification code endpoint.
-authRouter.post('/check-verification-code', async (req: any, res: any) => {
+usersRouter.post('/check-verification-code', async (req: any, res: any) => {
   const { email, emailCode } = req.body;
   
   // Validate account exists, get user data.
@@ -169,7 +169,7 @@ authRouter.post('/check-verification-code', async (req: any, res: any) => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Login endpoint.
-authRouter.post('/login', async (req: any, res: any) => {
+usersRouter.post('/login', async (req: any, res: any) => {
   const { email, password } = req.body;
 
   // Validate account exists, get user data.
@@ -194,7 +194,7 @@ authRouter.post('/login', async (req: any, res: any) => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Send password reset code endpoint.
-authRouter.post('/send-password-reset-code', async (req: any, res: any) => {
+usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
   const { email } = req.body;
 
   // NOTE: Since we redirect users immediately if not email verified, we can use emailCode database
@@ -235,7 +235,7 @@ authRouter.post('/send-password-reset-code', async (req: any, res: any) => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Check password reset code endpoint.
-authRouter.post('/check-password-reset-code', async (req: any, res: any) => {
+usersRouter.post('/check-password-reset-code', async (req: any, res: any) => {
   const { email, emailCode, newPassword } = req.body;
   
   // Validate account exists, get user data.
@@ -274,7 +274,7 @@ authRouter.post('/check-password-reset-code', async (req: any, res: any) => {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Delete user endpoint.
-authRouter.post('/delete-user', authenticateToken, async (req: any, res: any) => {
+usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) => {
   const userId: string = req.token.userId; 
 
   // Delete user from the database.
@@ -284,7 +284,24 @@ authRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =>
   res.status(204).json({ message: 'Deleted user successfully' });
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////
+// Get user profile dataendpoint.
+usersRouter.post('/get-user-profile-data', authenticateToken, async (req: any, res: any) => {
+  const userId: string = req.token.userId; 
+
+  // Get user from the database.
+  const [ getUserErr, getUserResult ] = await getUserFromId(userId);
+  const accountExists: boolean = !getUserErr && !(getUserResult.length === 0);
+  if (respondIf(!accountExists, res, 400, 'Server error, try again later...', 'Failed getUserFromId' + getUserErr)) return;
+
+  res.status(200).json({
+    firstName: getUserResult[0].first_name,
+    lastName: getUserResult[0].last_name,
+    email: getUserResult[0].email,
+  });
+});
+
 // TODO: Refresh tokens stored in http-only cookies, and shorten access token length to 15m
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-export default authRouter;
+export default usersRouter;

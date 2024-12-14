@@ -4,7 +4,7 @@ import cors from 'cors';
 import express from 'express';
 
 import { devServerPort } from './config';
-import authRouter from './apiRoutes/authRoutes'
+import usersRouter from './apiRoutes/usersRoutes'
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Initialize server app.
@@ -26,7 +26,7 @@ expressServer.use(express.json());
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Mount api routes.
-expressServer.use('/api/v1/users', authRouter);
+expressServer.use('/api/v1/users', usersRouter);
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Make sure that any request that does not matches a static file

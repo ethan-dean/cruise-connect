@@ -1,0 +1,89 @@
+.profile-page__container {
+  margin-top: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+}
+
+.profile-page__title {
+  color: black;
+}
+.profile-page__user-field {
+  color: black;
+}
+
+.profile-page__logout-button {
+  margin-top: 60px;
+	background-color: rgba(255, 255, 255, 0.5);
+	border: 2px solid rgba(255, 255, 255, .25);
+	border-radius: 12px;
+
+  color: black;
+  font-size: 24px;
+  padding: 20px 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  box-sizing: border-box;
+}
+
+.profile-page__delete-button {
+  margin-top: 60px;
+	background-color: rgba(255, 0, 0, 0.5);
+	border: 2px solid rgba(255, 255, 255, .25);
+	border-radius: 12px;
+
+  color: black;
+  font-size: 24px;
+  padding: 20px 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  box-sizing: border-box;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-popup {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.confirm-popup p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.confirm-popup__yes,
+.confirm-popup__no {
+  margin: 5px;
+  padding: 10px 20px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirm-popup__yes {
+  background-color: #28a745;
+  color: white;
+}
+
+.confirm-popup__no {
+  background-color: #6c757d;
+  color: white;
+}
