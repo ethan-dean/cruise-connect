@@ -102,6 +102,7 @@ async function addUser(firstName: string, lastName: string, email: string, passw
   // Query database, pass in false for email_verified since it starts un-verified.
   try {
     const results = await query(addUserQuery, [firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts]);
+    if (results.affectedRows === 0) return [ 'DATABASE_QUERY_ERROR', null ];
     return [ null, results ];
   } catch (err: any) {
     return [ err, null ]
@@ -164,7 +165,9 @@ async function getUserFromEmail(email: string): Promise<[string|null, any]> {
   // Query database.
   try {
     const results = await query(getUserQuery, [email]);
-    return [ null, results ];
+    // There can only be one user with each email
+    if (results.length > 1) return ['DATABASE_QUERY_ERROR', null];
+    return [ null, results?.[0] ];
   } catch (err: any) {
     return [ err, null ]
   }
@@ -178,7 +181,9 @@ async function getUserFromId(userId: number): Promise<[string|null, any]> {
   // Query database.
   try {
     const results = await query(getUserQuery, [userId]);
-    return [ null, results ];
+    // There can only be one user with each userId, just extra sanity check
+    if (results.length > 1) return ['DATABASE_QUERY_ERROR', null];
+    return [ null, results?.[0] ];
   } catch (err: any) {
     return [ err, null ]
   }
@@ -191,6 +196,7 @@ async function deleteUser(userId: number): Promise<[string|null, any]> {
   // Query database.
   try {
     const results = await query(deleteUserQuery, [userId]);
+    if (results.affectedRows === 0) return [ 'DATABASE_QUERY_ERROR', null ];
     return [ null, results ];
   } catch (err: any) {
     return [ err, null ]
