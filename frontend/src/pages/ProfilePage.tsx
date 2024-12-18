@@ -57,7 +57,7 @@ export default function ProfilePage() {
     }
 
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/user/delete-user`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/delete-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -22,7 +22,7 @@ function connectToDatabase() {
 connectToDatabase();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Create user_data table if it does not exist already.
+// Create userData table if it does not exist already.
 function setupDatabase() {
   // Log available databases (Optional: for debugging)
   connection.query('SHOW DATABASES', (err: any, results: any) => {
@@ -33,36 +33,35 @@ function setupDatabase() {
     console.log('Available Databases:', results);
   });
 
-  // TODO: Make table use camelCase so updateUser doesn't have to be weird
-  // Create user_data table if it does not exist
+  // Create userData table if it does not exist
   const createUserTableQuery = `
-    CREATE TABLE IF NOT EXISTS user_data (
-      user_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      first_name VARCHAR(${maxStringLength}) NOT NULL,
-      last_name VARCHAR(${maxStringLength}) NOT NULL,
+    CREATE TABLE IF NOT EXISTS userData (
+      userId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      firstName VARCHAR(${maxStringLength}) NOT NULL,
+      lastName VARCHAR(${maxStringLength}) NOT NULL,
       email VARCHAR(${maxStringLength}) NOT NULL,
       password VARCHAR(${maxStringLength}) NOT NULL,
-      email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-      email_code VARCHAR(${maxStringLength}) NOT NULL,
-      email_code_timeout INT UNSIGNED NOT NULL,
-      email_code_attempts INT UNSIGNED NOT NULL
+      emailVerified BOOLEAN NOT NULL DEFAULT FALSE,
+      emailCode VARCHAR(${maxStringLength}) NOT NULL,
+      emailCodeTimeout INT UNSIGNED NOT NULL,
+      emailCodeAttempts INT UNSIGNED NOT NULL
     )`;
 
   connection.query(createUserTableQuery, (err: any) => {
     if (err) {
-      console.error('Error creating user_data table:', err.stack);
+      console.error('Error creating userData table:', err.stack);
       return;
     }
-    console.log('user_data table is set up and ready.');
+    console.log('userData table is set up and ready.');
   });
 
-  // Optional: Log existing user_data records (for debugging)
-  connection.query('SELECT * FROM user_data', (err: any, results: any) => {
+  // Optional: Log existing userData records (for debugging)
+  connection.query('SELECT * FROM userData', (err: any, results: any) => {
     if (err) {
-      console.error('Error querying user_data:', err.stack);
+      console.error('Error querying userData:', err.stack);
       return;
     }
-    console.log('Existing user_data records:', results);
+    console.log('Existing userData records:', results);
   });
 }
 setupDatabase();
@@ -87,13 +86,13 @@ function validateStringFieldLengths(stringFields: Object) {
   return null;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Database query functions for express server.
+// TODO: Stop returning arrays of objects from functions that should return a single object
 
-// Add user to user_data.
+// Add user to userData.
 async function addUser(firstName: string, lastName: string, email: string, password: string, emailVerified: boolean, emailCode: string, emailCodeTimeout: number, emailCodeAttempts: number): Promise<[string|null, any]> {
-  const addUserQuery = `INSERT INTO user_data (first_name, last_name, email, password, email_verified, email_code, email_code_timeout, email_code_attempts)
+  const addUserQuery = `INSERT INTO userData (firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
   // Validate string fileds to be correct length.
   const validationError = validateStringFieldLengths({firstName, lastName, email, password, emailCode});
@@ -109,7 +108,7 @@ async function addUser(firstName: string, lastName: string, email: string, passw
   }
 }
 
-// Edit user in user_data (camelCase is converted to snake_case for database).
+// Edit user in userData (must use UpdateUserParms object since field names are used to select columns).
 type UpdateUserParams = {
   firstName?: string;
   lastName?: string;
@@ -120,21 +119,20 @@ type UpdateUserParams = {
   emailCodeTimeout?: number;
   emailCodeAttempts?: number;
 };
-async function updateUser(updateParams: UpdateUserParams, userID: string): Promise<[string|null, any]> {
+async function updateUser(updateParams: UpdateUserParams, userId: number): Promise<[string|null, any]> {
   // Dynamically handle each key-value pair in the updateParams.
   const fieldsToUpdate: string[] = [];
   const valuesToUpdate: any[] = [];
   for (const [key, value] of Object.entries(updateParams)) {
     if (value !== undefined) {
-      const snakeCaseKey = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
-      fieldsToUpdate.push(`${snakeCaseKey} = ?`);
+      fieldsToUpdate.push(`${key} = ?`);
       valuesToUpdate.push(value);
     }
   }
   // Construct the dynamic query.
-  const updateUserQuery = `UPDATE user_data 
+  const updateUserQuery = `UPDATE userData 
                              SET ${fieldsToUpdate.join(", ")} 
-                             WHERE user_id = ?`;
+                             WHERE userId = ?`;
   // Validate string fields to be correct length.
   const fieldsToValidate = Object.fromEntries(
     Object.entries(updateParams).filter(([_, value]) => (typeof value === 'string' && value !== undefined))
@@ -145,17 +143,18 @@ async function updateUser(updateParams: UpdateUserParams, userID: string): Promi
   }
   // Query database.
   try {
-    const results = await query(updateUserQuery, [...valuesToUpdate, userID]);
+    const results = await query(updateUserQuery, [...valuesToUpdate, userId]);
+    if (results.affectedRows === 0) return [ 'DATABASE_QUERY_ERROR', null ];
     return [ null, results ];
   } catch (err: any) {
-    return [ err, null ]
+    return [ err, null ];
   }
 }
 
 // Get user based on email and return their info.
 async function getUserFromEmail(email: string): Promise<[string|null, any]> {
-  const getUserQuery = `SELECT user_id, first_name, last_name, password, email_verified, email_code, email_code_timeout, email_code_attempts
-                          FROM user_data 
+  const getUserQuery = `SELECT userId, firstName, lastName, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts
+                          FROM userData 
                           WHERE email = ?`;
   // Validate string fileds to be correct length.
   const validationError = validateStringFieldLengths({ email });
@@ -172,15 +171,10 @@ async function getUserFromEmail(email: string): Promise<[string|null, any]> {
 }
 
 // Get user based on email and return their info.
-async function getUserFromId(userId: string): Promise<[string|null, any]> {
-  const getUserQuery = `SELECT first_name, last_name, email, password, email_verified, email_code, email_code_timeout, email_code_attempts
-                          FROM user_data 
-                          WHERE user_id = ?`;
-  // Validate string fileds to be correct length.
-  const validationError = validateStringFieldLengths({ userId });
-  if (validationError) {
-    return [ validationError, null ];
-  }
+async function getUserFromId(userId: number): Promise<[string|null, any]> {
+  const getUserQuery = `SELECT firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts
+                          FROM userData 
+                          WHERE userId = ?`;
   // Query database.
   try {
     const results = await query(getUserQuery, [userId]);
@@ -191,14 +185,9 @@ async function getUserFromId(userId: string): Promise<[string|null, any]> {
 }
 
 // Get user based on email and return their info.
-async function deleteUser(userId: string): Promise<[string|null, any]> {
-  const deleteUserQuery = `DELETE FROM user_data 
-                             WHERE user_id = ?`;
-  // Validate string fileds to be correct length.
-  const validationError = validateStringFieldLengths({ userId });
-  if (validationError) {
-    return [ validationError, null ];
-  }
+async function deleteUser(userId: number): Promise<[string|null, any]> {
+  const deleteUserQuery = `DELETE FROM userData 
+                             WHERE userId = ?`;
   // Query database.
   try {
     const results = await query(deleteUserQuery, [userId]);
@@ -207,7 +196,6 @@ async function deleteUser(userId: string): Promise<[string|null, any]> {
     return [ err, null ]
   }
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function exports for 'database.ts'.

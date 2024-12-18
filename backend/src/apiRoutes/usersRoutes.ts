@@ -3,13 +3,13 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-import authenticateToken from '../utils/authenticateToken';
+import { createToken, authenticateToken } from '../utils/tokenUtils';
 import getMailer from '../utils/getMailer';
 import { addUser, updateUser, getUserFromEmail, getUserFromId, deleteUser } from '../database';
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Secrets and constants.
-dotenv.config()   // Provides JWT_SECRET, EMAIL_PASSWORD_SECRET
+dotenv.config()   // Provides ...
 const EMAIL_CODE_TIMEOUT_MINUTES: number = 10;
 const MAX_EMAIL_CODE_ATTEMPTS: number = 5;
 
@@ -99,17 +99,17 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
   const accountExists: boolean = !getUserErr && !(getUserResult.length === 0);
   if (respondIf(!accountExists, res, 400, 'Server error, try again later...', 'Failed getUserFromEmail: ' + getUserErr)) return;
   // Validate email is not verified.
-  const emailVerified: boolean = getUserResult[0].email_verified;
+  const emailVerified: boolean = getUserResult[0].emailVerified;
   if (respondIf(emailVerified, res, 204, 'Account already verified', 'ACCOUNT_ALREADY_VERIFIED')) return;
   // Validate there is not an existing code, do not create new code on a redirect, do on resend button.
-  const isExistingCodeValid: boolean = (Date.now() / 1000) < getUserResult[0].email_code_timeout;
+  const isExistingCodeValid: boolean = (Date.now() / 1000) < getUserResult[0].emailCodeTimeout;
   if (respondIf(isExistingCodeValid && !forceResend, res, 200, 'Existing email code still valid, did not force resend')) return;
 
   // Generate random email verification code and calculate timeout in unix time.
   const emailCode: string = Math.floor(100000 + Math.random() * 900000).toString();
   const emailCodeTimeout: number = (Math.floor(Date.now() / 1000)) + 60 * EMAIL_CODE_TIMEOUT_MINUTES;
   // Save emailCode to the database.
-  const [ err, _result ] = await updateUser({ emailCode: emailCode, emailCodeTimeout: emailCodeTimeout, emailCodeAttempts: 0 }, getUserResult[0].user_id);
+  const [ err, _result ] = await updateUser({ emailCode: emailCode, emailCodeTimeout: emailCodeTimeout, emailCodeAttempts: 0 }, getUserResult[0].userId);
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
 
   // Send verification email.
@@ -137,33 +137,29 @@ usersRouter.post('/check-verification-code', async (req: any, res: any) => {
   const accountExists: boolean = !getUserErr && !(getUserResult.length === 0);
   if (respondIf(!accountExists, res, 400, 'Server error, try again later...', 'Failed getUserFromEmail: ' + getUserErr)) return;
   // Validate email is not verified.
-  const emailVerified: boolean = getUserResult[0].email_verified;
+  const emailVerified: boolean = getUserResult[0].emailVerified;
   if (respondIf(emailVerified, res, 204, 'Account already verified', 'ACCOUNT_ALREADY_VERIFIED')) return;
   // Validate code is not timed out, else frontend will prompt user to press resend code.
-  const isCodeTimedOut: boolean = getUserResult[0].email_code_timeout < (Date.now() / 1000);
+  const isCodeTimedOut: boolean = getUserResult[0].emailCodeTimeout < (Date.now() / 1000);
   if (respondIf(isCodeTimedOut, res, 401, 'Email verification code timed out', 'EMAIL_CODE_TIMEOUT')) return;
   // Validate there are attempts remaining, else frontend will prompt user to press resend code.
-  const isAttemptsRemaining: boolean = getUserResult[0].email_code_attempts < MAX_EMAIL_CODE_ATTEMPTS;
+  const isAttemptsRemaining: boolean = getUserResult[0].emailCodeAttempts < MAX_EMAIL_CODE_ATTEMPTS;
   if (respondIf(!isAttemptsRemaining, res, 401, `Email code rejected, all ${MAX_EMAIL_CODE_ATTEMPTS} attempts used`, 'EMAIL_CODE_MAX_ATTEMPTS')) return;
 
   // Update number of attempts before validating code.
-  const numAttempts: number = getUserResult[0].email_code_attempts + 1;
-  const [ updateAttemptErr, _updateAttemptResult ] = await updateUser({ emailCodeAttempts: numAttempts }, getUserResult[0].user_id);
+  const numAttempts: number = getUserResult[0].emailCodeAttempts + 1;
+  const [ updateAttemptErr, _updateAttemptResult ] = await updateUser({ emailCodeAttempts: numAttempts }, getUserResult[0].userId);
   if (respondIf(Boolean(updateAttemptErr), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + updateAttemptErr)) return;
   // Validate submitted code.
-  const isValidCode: boolean = (emailCode == getUserResult[0].email_code);
+  const isValidCode: boolean = (emailCode == getUserResult[0].emailCode);
   if (respondIf(!isValidCode, res, 401, 'Incorrect email verification code. Please try again.')) return;
 
-  // Update email_verified in the database.
-  const [ err, _result ] = await updateUser({ emailVerified: true, emailCode: "", emailCodeTimeout: 0, emailCodeAttempts: MAX_EMAIL_CODE_ATTEMPTS }, getUserResult[0].user_id);
+  // Update emailVerified in the database.
+  const [ err, _result ] = await updateUser({ emailVerified: true, emailCode: "", emailCodeTimeout: 0, emailCodeAttempts: MAX_EMAIL_CODE_ATTEMPTS }, getUserResult[0].userId);
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
 
   // Generate JWT.
-  const token = jwt.sign(
-    { userId: getUserResult[0].user_id, email: getUserResult[0].email, firstName: getUserResult[0].first_name, lastName: getUserResult[0].last_name },
-    process.env.JWT_SECRET!,
-    { expiresIn: "24h" }
-  );
+  const token = createToken(getUserResult[0].userId);
   res.status(200).json({ message: 'Verified email successfully', token });
 });
 
@@ -177,18 +173,14 @@ usersRouter.post('/login', async (req: any, res: any) => {
   const accountExists: boolean = !getUserErr && !(getUserResult.length === 0);
   if (respondIf(!accountExists, res, 401, 'Invalid email or password', getUserErr)) return;
   // Validate email is verified, else redirect to verify page.
-  const emailVerified: boolean = getUserResult[0].email_verified;
+  const emailVerified: boolean = getUserResult[0].emailVerified;
   if (respondIf(!emailVerified, res, 401, 'Email not verified', 'ACCOUNT_NOT_VERIFIED')) return;
   // Validate password matches.
   const isPasswordCorrect = await bcrypt.compare(password, getUserResult[0].password);
   if (respondIf(!isPasswordCorrect, res, 401, 'Invalid email or password')) return;
 
   // Generate JWT.
-  const token = jwt.sign(
-    { userId: getUserResult[0].user_id, email: getUserResult[0].email, firstName: getUserResult[0].first_name, lastName: getUserResult[0].last_name },
-    process.env.JWT_SECRET!,
-    { expiresIn: "24h" }
-  );
+  const token = createToken(getUserResult[0].userId);
   res.status(200).json({ message: 'Login successful', token });
 });
 
@@ -205,7 +197,7 @@ usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
   const accountExists: boolean = !getUserErr && !(getUserResult.length === 0);
   if (respondIf(!accountExists, res, 400, 'Email not associated with an account. Please register.', 'Failed getUserFromEmail: ' + getUserErr)) return;
   // Validate email is verified, else redirect to verify page.
-  const emailVerified: boolean = getUserResult[0].email_verified;
+  const emailVerified: boolean = getUserResult[0].emailVerified;
   if (respondIf(!emailVerified, res, 401, 'Email not yet verified', 'ACCOUNT_NOT_VERIFIED')) return;
 
   // NOTE: If there is an existing code just overwrite it, since the frontend does not automatically 
@@ -215,7 +207,7 @@ usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
   const emailCode: string = Math.floor(100000 + Math.random() * 900000).toString();
   const emailCodeTimeout: number = (Math.floor(Date.now() / 1000)) + 60 * EMAIL_CODE_TIMEOUT_MINUTES;
   // Save emailCode to the database.
-  const [ err, _result ] = await updateUser({ emailCode: emailCode, emailCodeTimeout: emailCodeTimeout, emailCodeAttempts: 0 }, getUserResult[0].user_id);
+  const [ err, _result ] = await updateUser({ emailCode: emailCode, emailCodeTimeout: emailCodeTimeout, emailCodeAttempts: 0 }, getUserResult[0].userId);
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
   
   // Send reset code email.
@@ -243,28 +235,28 @@ usersRouter.post('/check-password-reset-code', async (req: any, res: any) => {
   const accountExists: boolean = !getUserErr && !(getUserResult.length === 0);
   if (respondIf(!accountExists, res, 400, 'Server error, try again later...', 'Failed getUserFromEmail' + getUserErr)) return;
   // Validate email is verified, else redirect to verify page.
-  const emailVerified: boolean = getUserResult[0].email_verified;
+  const emailVerified: boolean = getUserResult[0].emailVerified;
   if (respondIf(!emailVerified, res, 401, 'Email not yet verified', 'ACCOUNT_NOT_VERIFIED')) return;
   // Validate code is not timed out, else frontend will prompt user to press resend code.
-  const isCodeTimedOut: boolean = getUserResult[0].email_code_timeout < (Date.now() / 1000);
+  const isCodeTimedOut: boolean = getUserResult[0].emailCodeTimeout < (Date.now() / 1000);
   if (respondIf(isCodeTimedOut, res, 401, 'Email verification code timed out', 'EMAIL_CODE_TIMEOUT')) return;
   // Validate there are attempts remaining, else frontend will prompt user to press resend code.
-  const isAttemptsRemaining: boolean = getUserResult[0].email_code_attempts < MAX_EMAIL_CODE_ATTEMPTS;
+  const isAttemptsRemaining: boolean = getUserResult[0].emailCodeAttempts < MAX_EMAIL_CODE_ATTEMPTS;
   if (respondIf(!isAttemptsRemaining, res, 401, `Email code rejected, all ${MAX_EMAIL_CODE_ATTEMPTS} attempts used`, 'EMAIL_CODE_MAX_ATTEMPTS')) return;
 
   // Update number of attempts before validating code.
-  const numAttempts: number = getUserResult[0].email_code_attempts + 1;
-  const [ updateAttemptErr, _updateAttemptResult ] = await updateUser({ emailCodeAttempts: numAttempts }, getUserResult[0].user_id);
+  const numAttempts: number = getUserResult[0].emailCodeAttempts + 1;
+  const [ updateAttemptErr, _updateAttemptResult ] = await updateUser({ emailCodeAttempts: numAttempts }, getUserResult[0].userId);
   if (respondIf(Boolean(updateAttemptErr), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + updateAttemptErr)) return;
   // Validate submitted code.
-  const isValidCode: boolean = (emailCode == getUserResult[0].email_code);
+  const isValidCode: boolean = (emailCode == getUserResult[0].emailCode);
   if (respondIf(!isValidCode, res, 401, 'Incorrect password reset code. Please try again.')) return;
   // Validate password requirements.
   if (respondIf(!isValidPassword(newPassword), res, 400, 'Password does not meet requirements')) return;
 
   // Update password in the database.
   const hashedPassword: string = await hashPassword(newPassword);
-  const [ err, _results ] = await updateUser({ password: hashedPassword, emailCode: "", emailCodeTimeout: 0, emailCodeAttempts: MAX_EMAIL_CODE_ATTEMPTS }, getUserResult[0].user_id);
+  const [ err, _results ] = await updateUser({ password: hashedPassword, emailCode: "", emailCodeTimeout: 0, emailCodeAttempts: MAX_EMAIL_CODE_ATTEMPTS }, getUserResult[0].userId);
   if (err) {
     return res.status(500).json({ message: 'Server error, try again later...', error: 'Failed updateUser: ' + err });
   }
@@ -275,7 +267,7 @@ usersRouter.post('/check-password-reset-code', async (req: any, res: any) => {
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Delete user endpoint.
 usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) => {
-  const userId: string = req.token.userId; 
+  const userId: number = req.token.userId; 
 
   // Delete user from the database.
   const [ err, _results ] = await deleteUser(userId);
@@ -287,7 +279,7 @@ usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Get user profile dataendpoint.
 usersRouter.post('/get-user-profile-data', authenticateToken, async (req: any, res: any) => {
-  const userId: string = req.token.userId; 
+  const userId: number = req.token.userId; 
 
   // Get user from the database.
   const [ getUserErr, getUserResult ] = await getUserFromId(userId);
@@ -295,8 +287,8 @@ usersRouter.post('/get-user-profile-data', authenticateToken, async (req: any, r
   if (respondIf(!accountExists, res, 400, 'Server error, try again later...', 'Failed getUserFromId' + getUserErr)) return;
 
   res.status(200).json({
-    firstName: getUserResult[0].first_name,
-    lastName: getUserResult[0].last_name,
+    firstName: getUserResult[0].firstName,
+    lastName: getUserResult[0].lastName,
     email: getUserResult[0].email,
   });
 });

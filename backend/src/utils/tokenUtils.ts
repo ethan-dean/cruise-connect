@@ -1,4 +1,20 @@
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Secrets.
+dotenv.config()   // Provides JWT_SECRET
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Function to standardize JWT creation in API endpoints.
+function createToken (userId: number) {
+  return jwt.sign(
+    { userId: userId },
+    process.env.JWT_SECRET!,
+    { expiresIn: "24h" }
+  );
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Middleware function to call in API endpoints for JWT authentication.
@@ -25,4 +41,9 @@ function authenticateToken(req: any, res: any, next: any) {
   });
 }
 
-export default authenticateToken;
+///////////////////////////////////////////////////////////////////////////////////////////
+// Function exports for 'tokenUtils.ts'.
+export {
+  createToken,
+  authenticateToken,
+};
