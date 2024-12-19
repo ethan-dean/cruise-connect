@@ -72,13 +72,14 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
         const data = await response.json();
         // Use AuthContext to mark user as logged in and store the JWT token in localStorage.
-        login(data.token);
+        login(data.accessToken);
         navigate('/dashboard');
       } else {
         // Handle server response if it's not 200 range OK.

@@ -55,7 +55,6 @@ export default function VerifyEmailPage() {
   // Retrieve user's email from localStorage and send code to user's email.
   useEffect(() => {
     const storedString: string = localStorage.getItem('userEmail') || '';
-    console.log(storedString);
     // If no userEmail from loginPage or registerPage, or invalid email 
     // redirect to login to input email again.
     if (!storedString || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(storedString)) {
@@ -105,13 +104,14 @@ export default function VerifyEmailPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ email, emailCode }),
       });
 
       if (response.ok) {
         const data = await response.json();
         // Use AuthContext to mark user as logged in and store the JWT token in localStorage.
-        login(data.token);
+        login(data.accessToken);
         navigate('/dashboard');
       } else {
         // Handle server response if it's not 200 range OK.

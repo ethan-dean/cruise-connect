@@ -1,10 +1,17 @@
 import path from 'path';
 import morgan from 'morgan';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 
 import { devServerPort } from './config';
 import usersRouter from './apiRoutes/usersRoutes'
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Set secret environment variables.
+dotenv.config();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Initialize server app.
@@ -17,10 +24,13 @@ expressServer.use(morgan('dev'));
 // Allow requests from the following addresses, production and development.
 // www.your_domain.com is re-routed to your_domain.com by nginx setup.
 expressServer.use(cors({
-    origin: ['https://your_domain.com', `http://localhost:${devServerPort}`],
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+  origin: ['https://your_domain.com', `http://localhost:${devServerPort}`],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  credentials: true,      // Allow cookies to be sent/received
 }));
+// Parse cookies into req.cookies
+expressServer.use(cookieParser());
 // Parse any messages with header 'application/json' with json parser.
 expressServer.use(express.json());
 

@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
   auth: {
-    user: 'thecruiseconnect.noreply@gmail.com',
+    user: process.env.EMAIL_ADDRESS!,
     pass: process.env.EMAIL_PASSWORD_SECRET!
   }
 });
@@ -13,4 +13,6 @@ function getMailer() {
   return transporter;
 }
 
-export default getMailer;
+export {
+  getMailer,
+};

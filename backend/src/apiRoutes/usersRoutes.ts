@@ -1,15 +1,12 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 
-import { createToken, authenticateToken } from '../utils/tokenUtils';
-import getMailer from '../utils/getMailer';
+import { createAccessToken, createRefreshToken, verifyToken, authenticateToken, cookieSettings } from '../utils/tokenUtils';
+import { getMailer } from '../utils/getMailer';
 import { addUser, updateUser, getUserFromEmail, getUserFromId, deleteUser } from '../database';
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Secrets and constants.
-dotenv.config()   // Provides ...
+// Constants.
 const EMAIL_CODE_TIMEOUT_MINUTES: number = 10;
 const MAX_EMAIL_CODE_ATTEMPTS: number = 5;
 
@@ -159,8 +156,10 @@ usersRouter.post('/check-verification-code', async (req: any, res: any) => {
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
 
   // Generate JWT.
-  const token = createToken(getUserResult.userId);
-  res.status(200).json({ message: 'Verified email successfully', token });
+  const accessToken = createAccessToken(getUserResult.userId);
+  const refreshToken = createRefreshToken(getUserResult.userId);
+  res.cookie('refreshToken', refreshToken, cookieSettings);
+  res.status(200).json({ message: 'Verified email successfully', accessToken: accessToken });
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -180,8 +179,10 @@ usersRouter.post('/login', async (req: any, res: any) => {
   if (respondIf(!isPasswordCorrect, res, 401, 'Invalid email or password')) return;
 
   // Generate JWT.
-  const token = createToken(getUserResult.userId);
-  res.status(200).json({ message: 'Login successful', token });
+  const accessToken = createAccessToken(getUserResult.userId);
+  const refreshToken = createRefreshToken(getUserResult.userId);
+  res.cookie('refreshToken', refreshToken, cookieSettings);
+  res.status(200).json({ message: 'Login successful', accessToken: accessToken });
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -265,6 +266,19 @@ usersRouter.post('/check-password-reset-code', async (req: any, res: any) => {
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
+// Logout user endpoint.
+usersRouter.post('/logout', (_req: any, res: any) => {
+  // Clear the refresh token cookie
+  res.cookie('refreshToken', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Same settings as when you set the cookie
+    sameSite: 'strict',
+    expires: new Date(0), // Expire the cookie immediately
+  });
+
+  res.status(200).json({ message: 'Logged out user successfully' });
+});
+///////////////////////////////////////////////////////////////////////////////////////////
 // Delete user endpoint.
 usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) => {
   const userId: number = req.token.userId; 
@@ -273,18 +287,28 @@ usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =
   const [ err, _results ] = await deleteUser(userId);
   if (respondIf(Boolean(err), res, 500, 'Failed to delete user', err)) return;
 
+  // Clear the refresh token cookie
+  res.cookie('refreshToken', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires: new Date(0), // Expire the cookie immediately
+  });
+
   res.status(204).json({ message: 'Deleted user successfully' });
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Get user profile dataendpoint.
+// Get user profile data endpoint.
 usersRouter.post('/get-user-profile-data', authenticateToken, async (req: any, res: any) => {
   const userId: number = req.token.userId; 
+  console.log(userId)
 
   // Get user from the database.
   const [ getUserErr, getUserResult ] = await getUserFromId(userId);
   const accountExists: boolean = !getUserErr && getUserResult;
-  if (respondIf(!accountExists, res, 400, 'Server error, try again later...', 'Failed getUserFromId' + getUserErr)) return;
+  console.log(getUserResult);
+  if (respondIf(!accountExists, res, 500, 'Server error, try again later...', 'Failed getUserFromId ' + getUserErr)) return;
 
   res.status(200).json({
     firstName: getUserResult.firstName,
@@ -293,7 +317,21 @@ usersRouter.post('/get-user-profile-data', authenticateToken, async (req: any, r
   });
 });
 
-// TODO: Refresh tokens stored in http-only cookies, and shorten access token length to 15m
+///////////////////////////////////////////////////////////////////////////////////////////
+// Refresh token endpoint.
+usersRouter.post('/refresh-token', (req: any, res: any) => {
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (!refreshToken) return res.status(401).json({ message: 'Refresh token not found', error: 'NO_REFRESH_TOKEN' });
+
+  verifyToken(refreshToken, (err: any, decoded: any) => {
+    if (err) return res.status(403).json({ message: err, error: 'INVALID_REFRESH_TOKEN' });
+
+    const newAccessToken = createAccessToken(decoded.userId);
+    res.json({ accessToken: newAccessToken });
+  });
+});
 
 ///////////////////////////////////////////////////////////////////////////////////////////
+// Export for 'usersRoutes.ts'.
 export default usersRouter;

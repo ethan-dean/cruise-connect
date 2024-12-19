@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Check if there's a valid JWT in local storage
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('accessToken');
     if (token) {
       setIsAuthenticated(true);
     }
@@ -28,13 +28,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Function to log in (store token and set authentication state)
   const login = (token: string) => {
-    localStorage.setItem('authToken', token);
+    localStorage.setItem('accessToken', token);
     setIsAuthenticated(true);
   };
 
   // Function to log out (remove token and reset authentication state)
   const logout = () => {
-    localStorage.removeItem('authToken');
+    localStorage.removeItem('accessToken');
     setIsAuthenticated(false);
   };
 

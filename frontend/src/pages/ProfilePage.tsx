@@ -2,6 +2,7 @@ import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { AuthContext } from "../contexts/AuthContext";
+import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import '../css/ProfilePage.css'
 
@@ -16,19 +17,9 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   const getUserProfileData = async () => {
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-      console.error('Auth token not found');
-      return;
-    }
-    
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/users/get-user-profile-data`, {
+      const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/users/get-user-profile-data`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
       });
 
       if (response.ok) {
@@ -41,7 +32,7 @@ export default function ProfilePage() {
         console.log(data.message || 'Server connection error, try again later...');
       }
     } catch (error) {
-      console.log('Server connection error, try again later...');
+      console.log('Server connection error, try again later... ');
     };
   };
 
@@ -49,20 +40,30 @@ export default function ProfilePage() {
     getUserProfileData();
   }, []);
 
-  const deleteAccount = async () => {
-    const authToken = localStorage.getItem('authToken');
-    if (!authToken) {
-      console.error('Auth token not found');
-      return;
-    }
-
+  const logoutAccount = async () => {
     try {
-      const response = await fetch(`${getBackendUrl()}/api/v1/users/delete-user`, {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/logout`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        logout();
+        navigate('/');
+      } else {
+        const data = await response.json();
+        console.log(data.message || 'Server connection error, try again later...');
+      }
+    } catch (error) {
+      console.log('Server connection error, try again later...');
+    }
+  }
+
+  const deleteAccount = async () => {
+    try {
+      const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/users/delete-user`, {
+        method: 'POST',
+        credentials: 'include'
       });
 
       if (response.ok) {
@@ -85,7 +86,7 @@ export default function ProfilePage() {
 
       <br/>
 
-      <button className='profile-page__logout-button' onClick={logout}>Log out</button>
+      <button className='profile-page__logout-button' onClick={logoutAccount}>Log out</button>
       <button 
         className='profile-page__delete-button' 
         onClick={() => setShowConfirm(true)}
