@@ -24,7 +24,7 @@ connectToDatabase();
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Create userData table if it does not exist already.
 function setupDatabase() {
-  // Log available databases (Optional: for debugging)
+  // Log available databases (for debugging)
   connection.query('SHOW DATABASES', (err: any, results: any) => {
     if (err) {
       console.error('Error showing databases:', err.stack);

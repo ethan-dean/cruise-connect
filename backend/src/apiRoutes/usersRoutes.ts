@@ -302,12 +302,10 @@ usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =
 // Get user profile data endpoint.
 usersRouter.post('/get-user-profile-data', authenticateToken, async (req: any, res: any) => {
   const userId: number = req.token.userId; 
-  console.log(userId)
 
   // Get user from the database.
   const [ getUserErr, getUserResult ] = await getUserFromId(userId);
   const accountExists: boolean = !getUserErr && getUserResult;
-  console.log(getUserResult);
   if (respondIf(!accountExists, res, 500, 'Server error, try again later...', 'Failed getUserFromId ' + getUserErr)) return;
 
   res.status(200).json({
