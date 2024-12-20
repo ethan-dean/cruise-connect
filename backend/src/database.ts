@@ -22,7 +22,37 @@ function connectToDatabase() {
 connectToDatabase();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Create userData table if it does not exist already.
+// Create tables if they do not exist already.
+
+// Function to create a table dynamically and log records
+function setupTable(createTableQuery: string) {
+  // Extract table name from the query
+  const match = createTableQuery.match(/CREATE TABLE IF NOT EXISTS (\w+)/i);
+  const tableName = match ? match[1] : null;
+  if (!tableName) {
+    console.error('Error: Unable to extract table name from query.');
+    return;
+  }
+
+  // Create the table
+  connection.query(createTableQuery, (err: any) => {
+    if (err) {
+      console.error(`Error creating ${tableName} table:`, err.stack);
+      return;
+    }
+    console.log(`${tableName} table is set up and ready.`);
+  });
+
+  // Log existing records on startup (for debugging)
+  connection.query(`SELECT * FROM ${tableName}`, (err: any, results: any) => {
+    if (err) {
+      console.error(`Error querying ${tableName}:`, err.stack);
+      return;
+    }
+    console.log(`${tableName} records:`, results);
+  });
+}
+
 function setupDatabase() {
   // Log available databases (for debugging)
   connection.query('SHOW DATABASES', (err: any, results: any) => {
@@ -34,7 +64,7 @@ function setupDatabase() {
   });
 
   // Create userData table if it does not exist
-  const createUserTableQuery = `
+  const createUserDataTableQuery = `
     CREATE TABLE IF NOT EXISTS userData (
       userId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       firstName VARCHAR(${maxStringLength}) NOT NULL,
@@ -46,23 +76,36 @@ function setupDatabase() {
       emailCodeTimeout INT UNSIGNED NOT NULL,
       emailCodeAttempts INT UNSIGNED NOT NULL
     )`;
+  setupTable(createUserDataTableQuery);
 
-  connection.query(createUserTableQuery, (err: any) => {
-    if (err) {
-      console.error('Error creating userData table:', err.stack);
-      return;
-    }
-    console.log('userData table is set up and ready.');
-  });
+  // Create shipData table if it does not exist
+  const createShipDataTableQuery = `
+    CREATE TABLE IF NOT EXISTS shipData (
+      shipId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      shipName VARCHAR(${maxStringLength}) NOT NULL
+    )`;
+  setupTable(createShipDataTableQuery);
 
-  // Optional: Log existing userData records (for debugging)
-  connection.query('SELECT * FROM userData', (err: any, results: any) => {
-    if (err) {
-      console.error('Error querying userData:', err.stack);
-      return;
-    }
-    console.log('Existing userData records:', results);
-  });
+  // Create cruiseData table if it does not exist
+  const createCruiseDataTableQuery = `
+    CREATE TABLE IF NOT EXISTS cruiseData (
+      cruiseId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      cruiseDeparatureDate DATE NOT NULL,
+      shipId INT UNSIGNED NOT NULL, 
+      FOREIGN KEY (shipId) REFERENCES shipData(shipId)
+    )`;
+  setupTable(createCruiseDataTableQuery);
+
+  // Create joinedCruises table if it does not exist
+  const createJoinedCruisesTableQuery = `
+    CREATE TABLE IF NOT EXISTS joinedCruises (
+      userId INT UNSIGNED NOT NULL,
+      cruiseId INT UNSIGNED NOT NULL,
+      FOREIGN KEY (userId) REFERENCES userData(userId),
+      FOREIGN KEY (cruiseId) REFERENCES cruiseData(cruiseId)
+    );
+  `;
+  setupTable(createJoinedCruisesTableQuery);
 }
 setupDatabase();
 
@@ -88,7 +131,6 @@ function validateStringFieldLengths(stringFields: Object) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Database query functions for express server.
-// TODO: Stop returning arrays of objects from functions that should return a single object
 
 // Add user to userData.
 async function addUser(firstName: string, lastName: string, email: string, password: string, emailVerified: boolean, emailCode: string, emailCodeTimeout: number, emailCodeAttempts: number): Promise<[string|null, any]> {
