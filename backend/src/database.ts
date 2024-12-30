@@ -71,10 +71,18 @@ function setupDatabase() {
       lastName VARCHAR(${maxStringLength}) NOT NULL,
       email VARCHAR(${maxStringLength}) NOT NULL,
       password VARCHAR(${maxStringLength}) NOT NULL,
-      emailVerified BOOLEAN NOT NULL DEFAULT FALSE,
+      emailVerified BOOLEAN NOT NULL,
       emailCode VARCHAR(${maxStringLength}) NOT NULL,
       emailCodeTimeout INT UNSIGNED NOT NULL,
-      emailCodeAttempts INT UNSIGNED NOT NULL
+      emailCodeAttempts INT UNSIGNED NOT NULL,
+      profileFinished BOOLEAN NOT NULL,
+      birthDate DATE DEFAULT NULL,
+      bio VARCHAR(${maxStringLength}) DEFAULT NULL,
+      instagram VARCHAR(${maxStringLength}) DEFAULT NULL,
+      snapchat VARCHAR(${maxStringLength}) DEFAULT NULL,
+      tiktok VARCHAR(${maxStringLength}) DEFAULT NULL,
+      twitter VARCHAR(${maxStringLength}) DEFAULT NULL,
+      facebook VARCHAR(${maxStringLength}) DEFAULT NULL
     )`;
   setupTable(createUserDataTableQuery);
 
@@ -133,9 +141,9 @@ function validateStringFieldLengths(stringFields: Object) {
 // Database query functions for express server.
 
 // Add user to userData.
-async function addUser(firstName: string, lastName: string, email: string, password: string, emailVerified: boolean, emailCode: string, emailCodeTimeout: number, emailCodeAttempts: number): Promise<[string|null, any]> {
-  const addUserQuery = `INSERT INTO userData (firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+async function addUser(firstName: string, lastName: string, email: string, password: string, emailVerified: boolean, emailCode: string, emailCodeTimeout: number, emailCodeAttempts: number, profileFinished: boolean): Promise<[string|null, any]> {
+  const addUserQuery = `INSERT INTO userData (firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   // Validate string fileds to be correct length.
   const validationError = validateStringFieldLengths({firstName, lastName, email, password, emailCode});
   if (validationError) {
@@ -143,7 +151,7 @@ async function addUser(firstName: string, lastName: string, email: string, passw
   }
   // Query database, pass in false for email_verified since it starts un-verified.
   try {
-    const results = await query(addUserQuery, [firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts]);
+    const results = await query(addUserQuery, [firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished]);
     if (results.affectedRows === 0) return [ 'DATABASE_QUERY_ERROR', null ];
     return [ null, results ];
   } catch (err: any) {
@@ -161,6 +169,14 @@ type UpdateUserParams = {
   emailCode?: string;
   emailCodeTimeout?: number;
   emailCodeAttempts?: number;
+  profileFinished?: boolean;
+  birthDate?: Date;
+  bio?: string;
+  instagram?: string;
+  snapchat?: string;
+  tiktok?: string;
+  twitter?: string;
+  facebook?: string;
 };
 async function updateUser(updateParams: UpdateUserParams, userId: number): Promise<[string|null, any]> {
   // Dynamically handle each key-value pair in the updateParams.
@@ -196,7 +212,7 @@ async function updateUser(updateParams: UpdateUserParams, userId: number): Promi
 
 // Get user based on email and return their info.
 async function getUserFromEmail(email: string): Promise<[string|null, any]> {
-  const getUserQuery = `SELECT userId, firstName, lastName, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts
+  const getUserQuery = `SELECT userId, firstName, lastName, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished
                           FROM userData 
                           WHERE email = ?`;
   // Validate string fileds to be correct length.
@@ -217,7 +233,7 @@ async function getUserFromEmail(email: string): Promise<[string|null, any]> {
 
 // Get user based on email and return their info.
 async function getUserFromId(userId: number): Promise<[string|null, any]> {
-  const getUserQuery = `SELECT firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts
+  const getUserQuery = `SELECT firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished
                           FROM userData 
                           WHERE userId = ?`;
   // Query database.

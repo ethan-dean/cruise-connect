@@ -78,9 +78,10 @@ usersRouter.post('/register', async (req: any, res: any) => {
   const emailCode = "";
   const emailCodeTimeout = 0;
   const emailCodeAttempts = MAX_EMAIL_CODE_ATTEMPTS;
+  const profileFinished = false;
 
   // Save user to the database.
-  const [ err, _result ] = await addUser(formattedFirstName, formattedLastName, email, hashedPassword, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts);
+  const [ err, _result ] = await addUser(formattedFirstName, formattedLastName, email, hashedPassword, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished);
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed addUser: ' + err)) return;
 
   res.status(201).json({ message: 'User registered successfully.' });
