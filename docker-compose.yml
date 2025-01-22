@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  backend:
+    # TODO: Setup prod image_registry
+    image: your_docker_registry/your_backend_image:latest
+    container_name: backend
+    environment:
+      NODE_ENV: production

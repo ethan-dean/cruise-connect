@@ -1,6 +1,7 @@
 const mysql = require('mysql2');
 
 import { dbConnectionConfig } from './config';
+import { setupTable } from './utils/setupTable';
 
 
 // The length of a string in the database (60 chars since bcrypt's hash function outputs 60 chars).
@@ -22,36 +23,7 @@ function connectToDatabase() {
 connectToDatabase();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Create tables if they do not exist already.
-
-// Function to create a table dynamically and log records
-function setupTable(createTableQuery: string) {
-  // Extract table name from the query
-  const match = createTableQuery.match(/CREATE TABLE IF NOT EXISTS (\w+)/i);
-  const tableName = match ? match[1] : null;
-  if (!tableName) {
-    console.error('Error: Unable to extract table name from query.');
-    return;
-  }
-
-  // Create the table
-  connection.query(createTableQuery, (err: any) => {
-    if (err) {
-      console.error(`Error creating ${tableName} table:`, err.stack);
-      return;
-    }
-    console.log(`${tableName} table is set up and ready.`);
-  });
-
-  // Log existing records on startup (for debugging)
-  connection.query(`SELECT * FROM ${tableName}`, (err: any, results: any) => {
-    if (err) {
-      console.error(`Error querying ${tableName}:`, err.stack);
-      return;
-    }
-    console.log(`${tableName} records:`, results);
-  });
-}
+// If table does not exist create it, fill it with initialDbData from folder.
 
 function setupDatabase() {
   // Log available databases (for debugging)
@@ -84,7 +56,7 @@ function setupDatabase() {
       twitter VARCHAR(${maxStringLength}) DEFAULT NULL,
       facebook VARCHAR(${maxStringLength}) DEFAULT NULL
     )`;
-  setupTable(createUserDataTableQuery);
+  setupTable(connection, createUserDataTableQuery);
 
   // Create shipData table if it does not exist
   const createShipDataTableQuery = `
@@ -92,7 +64,7 @@ function setupDatabase() {
       shipId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       shipName VARCHAR(${maxStringLength}) NOT NULL
     )`;
-  setupTable(createShipDataTableQuery);
+  setupTable(connection, createShipDataTableQuery);
 
   // Create cruiseData table if it does not exist
   const createCruiseDataTableQuery = `
@@ -102,7 +74,7 @@ function setupDatabase() {
       shipId INT UNSIGNED NOT NULL, 
       FOREIGN KEY (shipId) REFERENCES shipData(shipId)
     )`;
-  setupTable(createCruiseDataTableQuery);
+  setupTable(connection, createCruiseDataTableQuery);
 
   // Create joinedCruises table if it does not exist
   const createJoinedCruisesTableQuery = `
@@ -113,7 +85,7 @@ function setupDatabase() {
       FOREIGN KEY (cruiseId) REFERENCES cruiseData(cruiseId)
     );
   `;
-  setupTable(createJoinedCruisesTableQuery);
+  setupTable(connection, createJoinedCruisesTableQuery);
 }
 setupDatabase();
 
@@ -231,7 +203,7 @@ async function getUserFromEmail(email: string): Promise<[string|null, any]> {
   }
 }
 
-// Get user based on email and return their info.
+// Get user based on userId and return their info.
 async function getUserFromId(userId: number): Promise<[string|null, any]> {
   const getUserQuery = `SELECT firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished
                           FROM userData 
@@ -247,7 +219,25 @@ async function getUserFromId(userId: number): Promise<[string|null, any]> {
   }
 }
 
-// Get user based on email and return their info.
+// Get multiple user profiles based on an array of userIds.
+async function getUserProfilesFromIds(userIds: number[]): Promise<[string | null, any]> {
+  if (userIds.length === 0) return ['EMPTY_INPUT', null];
+
+  // Construct a dynamic SQL query with placeholders.
+  const placeholders = userIds.map(() => '?').join(',');
+  const getUsersQuery = `SELECT firstName, lastName, birthDate, bio, instagram, snapchat, tiktok, twitter, facebook
+                         FROM userData
+                         WHERE userId IN (${placeholders})`;
+
+  try {
+    const results = await query(getUsersQuery, userIds);
+    return [null, results];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Delete user based on userId.
 async function deleteUser(userId: number): Promise<[string|null, any]> {
   const deleteUserQuery = `DELETE FROM userData 
                              WHERE userId = ?`;
@@ -268,5 +258,6 @@ export {
   updateUser,
   getUserFromEmail,
   getUserFromId,
+  getUserProfilesFromIds,
   deleteUser,
 };

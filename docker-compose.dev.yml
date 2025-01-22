@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  backend:
+    build: ./backend  # Use local Dockerfile for development
+    ports:
+      - "3000:3000"  # Expose the backend for local development
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./backend:/app  # Mount local backend code for live development
+      - /app/node_modules
