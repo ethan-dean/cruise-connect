@@ -1,9 +1,11 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 
-import { createAccessToken, createRefreshToken, verifyToken, authenticateToken, cookieSettings } from '../utils/tokenUtils';
 import { getMailer } from '../utils/getMailer';
-import { addUser, updateUser, getUserFromEmail, getUserFromId, deleteUser } from '../database';
+import { createAccessToken, createRefreshToken, verifyToken,
+          authenticateToken, cookieSettings } from '../utils/tokenUtils';
+import { addUser, updateUser, getUserFromEmail, getUserProfilesFromIds,
+          getUserFromId, deleteUser, getJoinedCruisesByCruise } from '../database';
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Constants.
@@ -300,8 +302,8 @@ usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// Get user profile data endpoint.
-usersRouter.post('/get-user-profile-data', authenticateToken, async (req: any, res: any) => {
+// Get user data endpoint.
+usersRouter.post('/get-user-data', authenticateToken, async (req: any, res: any) => {
   const userId: number = req.token.userId; 
 
   // Get user from the database.
@@ -314,6 +316,30 @@ usersRouter.post('/get-user-profile-data', authenticateToken, async (req: any, r
     lastName: getUserResult.lastName,
     email: getUserResult.email,
   });
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Get user profiles data endpoint.
+usersRouter.post('/get-user-profiles-for-cruise', authenticateToken, async (req: any, res: any) => {
+  const cruiseId: number = req.body.cruiseId;
+
+  if (!cruiseId) {
+    return res.status(400).json({ error: 'Invalid input: cruiseId is required.' });
+  }
+
+  // Get userIds for the given cruiseId.
+  const [getUsersErr, userIds] = await getJoinedCruisesByCruise(cruiseId);
+  if (respondIf(!!getUsersErr, res, 500, 'Server error, try again later...', 'Failed getJoinedCruisesByCruise ' + getUsersErr)) return;
+
+  if (userIds.length === 0) {
+    return res.status(200).json([]); // Return an empty array if no users are found.
+  }
+
+  // Get user profiles based on userIds.
+  const [getProfilesErr, userProfiles] = await getUserProfilesFromIds(userIds);
+  if (respondIf(!!getProfilesErr, res, 500, 'Server error, try again later...', 'Failed getUserProfilesFromIds ' + getProfilesErr)) return;
+
+  res.status(200).json(userProfiles);
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////

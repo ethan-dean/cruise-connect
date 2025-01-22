@@ -340,6 +340,32 @@ async function deleteJoinedCruise(userId: number, cruiseId: number): Promise<[st
   }
 }
 
+// Get userIds of users who joined a specific cruise.
+async function getJoinedCruisesByCruise(cruiseId: number): Promise<[string | null, number[]]> {
+  const getJoinedCruisesQuery = `SELECT userId FROM joinedCruises WHERE cruiseId = ?`;
+
+  try {
+    const results = await query(getJoinedCruisesQuery, [cruiseId]);
+    const userIds = results.map((row: any) => row.userId);
+    return [null, userIds];
+  } catch (err: any) {
+    return [err, []];
+  }
+}
+
+// Get cruiseIds of cruises who were joined by a specific user.
+async function getJoinedCruisesByUser(userId: number): Promise<[string | null, number[]]> {
+  const getJoinedCruisesQuery = `SELECT cruiseId FROM joinedCruises WHERE userId = ?`;
+
+  try {
+    const results = await query(getJoinedCruisesQuery, [userId]);
+    const cruiseIds = results.map((row: any) => row.cruiseId);
+    return [null, cruiseIds];
+  } catch (err: any) {
+    return [err, []];
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function exports for 'database.ts'.
 export {
@@ -355,5 +381,7 @@ export {
   getCruiseByDateAndShip,
   getCruiseById,
   addJoinedCruise,
-  deleteJoinedCruise
+  deleteJoinedCruise,
+  getJoinedCruisesByUser,
+  getJoinedCruisesByCruise,
 };

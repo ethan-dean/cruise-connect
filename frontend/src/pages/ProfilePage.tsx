@@ -18,7 +18,7 @@ export default function ProfilePage() {
 
   const getUserProfileData = async () => {
     try {
-      const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/users/get-user-profile-data`, {
+      const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/users/get-user-data`, {
         method: 'POST',
       });
 
