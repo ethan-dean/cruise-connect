@@ -24,7 +24,6 @@ connectToDatabase();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // If table does not exist create it, fill it with initialDbData from folder.
-
 function setupDatabase() {
   // Log available databases (for debugging)
   connection.query('SHOW DATABASES', (err: any, results: any) => {
@@ -251,6 +250,96 @@ async function deleteUser(userId: number): Promise<[string|null, any]> {
   }
 }
 
+// Get all ships' names and IDs.
+async function getShipsData(): Promise<[string | null, any]> {
+  const getShipsQuery = `SELECT shipId, shipName FROM shipData`;
+
+  try {
+    const results = await query(getShipsQuery, []);
+    return [null, results];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Get a ship's name based on its ID.
+async function getShipDataById(shipId: number): Promise<[string | null, any]> {
+  const getShipQuery = `SELECT shipName FROM shipData WHERE shipId = ?`;
+
+  try {
+    const results = await query(getShipQuery, [shipId]);
+    if (results.length > 1) return ['DATABASE_QUERY_ERROR', null];
+    return [null, results?.[0] || null];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Add a new cruise to the cruiseData table and return its cruiseId.
+async function addCruise(cruiseDepartureDate: string, shipId: number): Promise<[string | null, any]> {
+  const addCruiseQuery = `INSERT INTO cruiseData (cruiseDeparatureDate, shipId) VALUES (?, ?)`;
+
+  try {
+    const results = await query(addCruiseQuery, [cruiseDepartureDate, shipId]);
+    if (results.affectedRows === 0) return ['DATABASE_QUERY_ERROR', null];
+    return [null, { cruiseId: results.insertId }];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Get the cruiseId for a given cruiseDepartureDate and shipId.
+async function getCruiseByDateAndShip(cruiseDepartureDate: string, shipId: number): Promise<[string | null, any]> {
+  const getCruiseQuery = `SELECT cruiseId FROM cruiseData WHERE cruiseDeparatureDate = ? AND shipId = ?`;
+
+  try {
+    const results = await query(getCruiseQuery, [cruiseDepartureDate, shipId]);
+    if (results.length > 1) return ['DATABASE_QUERY_ERROR', null];
+    return [null, results?.[0]?.cruiseId || null];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Get cruise data based on cruiseId.
+async function getCruiseById(cruiseId: number): Promise<[string | null, any]> {
+  const getCruiseDataQuery = `SELECT cruiseId, cruiseDeparatureDate, shipId FROM cruiseData WHERE cruiseId = ?`;
+
+  try {
+    const results = await query(getCruiseDataQuery, [cruiseId]);
+    if (results.length > 1) return ['DATABASE_QUERY_ERROR', null];
+    return [null, results?.[0] || null];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Add a joined cruise to joinedCruises when a user joins a cruise.
+async function addJoinedCruise(userId: number, cruiseId: number): Promise<[string | null, any]> {
+  const addJoinedCruiseQuery = `INSERT INTO joinedCruises (userId, cruiseId) VALUES (?, ?)`;
+
+  try {
+    const results = await query(addJoinedCruiseQuery, [userId, cruiseId]);
+    if (results.affectedRows === 0) return ['DATABASE_QUERY_ERROR', null];
+    return [null, results];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Delete a joined cruise from joinedCruises when a user leaves a cruise.
+async function deleteJoinedCruise(userId: number, cruiseId: number): Promise<[string | null, any]> {
+  const deleteJoinedCruiseQuery = `DELETE FROM joinedCruises WHERE userId = ? AND cruiseId = ?`;
+
+  try {
+    const results = await query(deleteJoinedCruiseQuery, [userId, cruiseId]);
+    if (results.affectedRows === 0) return ['DATABASE_QUERY_ERROR', null];
+    return [null, results];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function exports for 'database.ts'.
 export {
@@ -260,4 +349,11 @@ export {
   getUserFromId,
   getUserProfilesFromIds,
   deleteUser,
+  getShipsData,
+  getShipDataById,
+  addCruise,
+  getCruiseByDateAndShip,
+  getCruiseById,
+  addJoinedCruise,
+  deleteJoinedCruise
 };
