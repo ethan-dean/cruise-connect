@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 
 import { devServerPort } from './config';
 import usersRouter from './apiRoutes/usersRoutes'
+import cruisesRouter from './apiRoutes/cruisesRoutes'
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -37,6 +38,7 @@ expressServer.use(express.json());
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Mount api routes.
 expressServer.use('/api/v1/users', usersRouter);
+expressServer.use('/api/v1/cruises', cruisesRouter);
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Make sure that any request that does not matches a static file
