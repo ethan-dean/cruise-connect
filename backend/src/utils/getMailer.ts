@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 
+///////////////////////////////////////////////////////////////////////////////////////////
 // Initialize mailer.
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
@@ -13,6 +14,8 @@ function getMailer() {
   return transporter;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+// Exports for 'getMailer.ts'.
 export {
   getMailer,
 };

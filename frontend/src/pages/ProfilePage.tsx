@@ -52,6 +52,7 @@ export default function ProfilePage() {
         navigate('/');
       } else {
         const data = await response.json();
+
         console.log(data.message || 'Server connection error, try again later...');
       }
     } catch (error) {

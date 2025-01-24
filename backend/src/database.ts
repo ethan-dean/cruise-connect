@@ -57,11 +57,21 @@ function setupDatabase() {
     )`;
   setupTable(connection, createUserDataTableQuery);
 
+  // Create companyData table if it does not exist
+  const createCompanyDataTableQuery = `
+    CREATE TABLE IF NOT EXISTS companyData (
+      companyId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      companyName VARCHAR(${maxStringLength}) NOT NULL
+    )`;
+  setupTable(connection, createCompanyDataTableQuery);
+
   // Create shipData table if it does not exist
   const createShipDataTableQuery = `
     CREATE TABLE IF NOT EXISTS shipData (
       shipId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      shipName VARCHAR(${maxStringLength}) NOT NULL
+      shipName VARCHAR(${maxStringLength}) NOT NULL,
+      companyId INT UNSIGNED NOT NULL,
+      FOREIGN KEY (companyId) REFERENCES companyData(companyId)
     )`;
   setupTable(connection, createShipDataTableQuery);
 
@@ -69,7 +79,7 @@ function setupDatabase() {
   const createCruiseDataTableQuery = `
     CREATE TABLE IF NOT EXISTS cruiseData (
       cruiseId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      cruiseDeparatureDate DATE NOT NULL,
+      cruiseDepartureDate DATE NOT NULL,
       shipId INT UNSIGNED NOT NULL, 
       FOREIGN KEY (shipId) REFERENCES shipData(shipId)
     )`;
@@ -250,12 +260,37 @@ async function deleteUser(userId: number): Promise<[string|null, any]> {
   }
 }
 
-// Get all ships' names and IDs.
-async function getShipsData(): Promise<[string | null, any]> {
-  const getShipsQuery = `SELECT shipId, shipName FROM shipData`;
+// Get all companies' names and IDs.
+async function getCompaniesData(): Promise<[string | null, any]> {
+  const getCompaniesQuery = `SELECT companyId, companyName FROM companyData`;
 
   try {
-    const results = await query(getShipsQuery, []);
+    const results = await query(getCompaniesQuery, []);
+    return [null, results];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Get a company's name based on its ID.
+async function getCompanyDataById(companyId: number): Promise<[string | null, any]> {
+  const getCompanyQuery = `SELECT companyName FROM companyData WHERE companyId = ?`;
+
+  try {
+    const results = await query(getCompanyQuery, [companyId]);
+    if (results.length > 1) return ['DATABASE_QUERY_ERROR', null];
+    return [null, results?.[0] || null];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
+// Get all ships' names and IDs.
+async function getShipsDataByCompany(companyId: number): Promise<[string | null, any]> {
+  const getShipsQuery = `SELECT shipId, shipName FROM shipData WHERE companyId = ?`;
+
+  try {
+    const results = await query(getShipsQuery, [companyId]);
     return [null, results];
   } catch (err: any) {
     return [err, null];
@@ -264,7 +299,7 @@ async function getShipsData(): Promise<[string | null, any]> {
 
 // Get a ship's name based on its ID.
 async function getShipDataById(shipId: number): Promise<[string | null, any]> {
-  const getShipQuery = `SELECT shipName FROM shipData WHERE shipId = ?`;
+  const getShipQuery = `SELECT shipName, companyId FROM shipData WHERE shipId = ?`;
 
   try {
     const results = await query(getShipQuery, [shipId]);
@@ -277,7 +312,7 @@ async function getShipDataById(shipId: number): Promise<[string | null, any]> {
 
 // Add a new cruise to the cruiseData table and return its cruiseId.
 async function addCruise(cruiseDepartureDate: string, shipId: number): Promise<[string | null, any]> {
-  const addCruiseQuery = `INSERT INTO cruiseData (cruiseDeparatureDate, shipId) VALUES (?, ?)`;
+  const addCruiseQuery = `INSERT INTO cruiseData (cruiseDepartureDate, shipId) VALUES (?, ?)`;
 
   try {
     const results = await query(addCruiseQuery, [cruiseDepartureDate, shipId]);
@@ -290,7 +325,7 @@ async function addCruise(cruiseDepartureDate: string, shipId: number): Promise<[
 
 // Get the cruiseId for a given cruiseDepartureDate and shipId.
 async function getCruiseByDateAndShip(cruiseDepartureDate: string, shipId: number): Promise<[string | null, any]> {
-  const getCruiseQuery = `SELECT cruiseId FROM cruiseData WHERE cruiseDeparatureDate = ? AND shipId = ?`;
+  const getCruiseQuery = `SELECT cruiseId FROM cruiseData WHERE cruiseDepartureDate = ? AND shipId = ?`;
 
   try {
     const results = await query(getCruiseQuery, [cruiseDepartureDate, shipId]);
@@ -303,7 +338,7 @@ async function getCruiseByDateAndShip(cruiseDepartureDate: string, shipId: numbe
 
 // Get cruise data based on cruiseId.
 async function getCruiseById(cruiseId: number): Promise<[string | null, any]> {
-  const getCruiseDataQuery = `SELECT cruiseId, cruiseDeparatureDate, shipId FROM cruiseData WHERE cruiseId = ?`;
+  const getCruiseDataQuery = `SELECT cruiseId, cruiseDepartureDate, shipId FROM cruiseData WHERE cruiseId = ?`;
 
   try {
     const results = await query(getCruiseDataQuery, [cruiseId]);
@@ -375,7 +410,9 @@ export {
   getUserFromId,
   getUserProfilesFromIds,
   deleteUser,
-  getShipsData,
+  getCompaniesData,
+  getCompanyDataById,
+  getShipsDataByCompany,
   getShipDataById,
   addCruise,
   getCruiseByDateAndShip,

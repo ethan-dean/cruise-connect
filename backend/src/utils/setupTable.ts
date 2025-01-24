@@ -81,6 +81,8 @@ function insertInitialData(connection: any, tableName: string, records: any[]) {
   console.log(`Inserted ${records.length} records into ${tableName}.`);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+// Exports for 'setupTable.ts'.
 export {
   setupTable,
 };

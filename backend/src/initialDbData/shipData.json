@@ -1,16 +1,20 @@
 {
   "data": [
     {
-      "shipName": "Icon of the Seas"
+      "shipName": "Icon of the Seas",
+      "companyId": "1"
     },
     {
-      "shipName": "Star of the Seas"
+      "shipName": "Star of the Seas",
+      "companyId": "1"
     },
     {
-      "shipName": "Spectrum of the Seas"
+      "shipName": "Spectrum of the Seas",
+      "companyId": "1"
     },
     {
-      "shipName": "Odyssey of the Seas"
+      "shipName": "Odyssey of the Seas",
+      "companyId": "1"
     }
   ]
 }
