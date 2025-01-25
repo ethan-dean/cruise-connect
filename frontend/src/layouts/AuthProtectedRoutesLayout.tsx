@@ -6,6 +6,7 @@ import { AuthContext } from '../contexts/AuthContext';
 export default function AuthProtectedRoutesLayout() {
     const { isAuthenticated } = useContext(AuthContext);
 
+    // TODO: Add redirect to profile creation page
     if (!isAuthenticated) {
       return <Navigate to='/' />;
     }

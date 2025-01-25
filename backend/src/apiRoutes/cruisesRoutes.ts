@@ -10,6 +10,8 @@ import { getCompaniesData, getCompanyDataById,
         } from '../database'
 
 
+// TODO: Improve robustness of these endpoints (find breaking issues)
+// TODO: Use respondIf consistently
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Initialize server app.
 const cruisesRouter = express.Router();
@@ -27,7 +29,7 @@ cruisesRouter.post('/get-companies', authenticateToken, async (req: any, res: an
 // Get ship data for a specific company endpoint.
 cruisesRouter.post('/get-ships-of-company', authenticateToken, async (req: any, res: any) => {
   const { companyId } = req.body;
-  if (!companyId) return res.status(400).json({ error: 'Invalid input: companyId is required.' });
+  if (respondIf(!companyId, res, 400, 'Server error, try again later...', 'Invalid input: companyId is required.' )) return;
 
   const [getShipsErr, ships] = await getShipsDataByCompany(companyId);
   if (respondIf(!!getShipsErr, res, 500, 'Server error, try again later...', 'Failed getShipsDataByCompany ' + getShipsErr)) return;
@@ -40,7 +42,7 @@ cruisesRouter.post('/get-ships-of-company', authenticateToken, async (req: any, 
 cruisesRouter.post('/join-cruise', authenticateToken, async (req: any, res: any) => {
   const userId: number = req.token.userId;
   const { cruiseDepartureDate, shipId } = req.body;
-  if (!cruiseDepartureDate || !shipId) return res.status(400).json({ error: 'Invalid input: cruiseDepartureDate and shipId are required.' });
+  if (respondIf(!cruiseDepartureDate || !shipId, res, 400, 'Server error, try again later...', 'Invalid input: cruiseDepartureDate and shipId are required.')) return;
 
   const [getCruiseErr, cruiseId] = await getCruiseByDateAndShip(cruiseDepartureDate, shipId);
   if (respondIf(!!getCruiseErr, res, 500, 'Server error, try again later...', 'Failed getCruiseByDateAndShip ' + getCruiseErr)) return;
@@ -105,6 +107,7 @@ cruisesRouter.post('/get-my-cruises', authenticateToken, async (req: any, res: a
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Get user profiles data endpoint.
+// TODO: Make this send data in groups
 cruisesRouter.post('/get-cruise-feed', authenticateToken, async (req: any, res: any) => {
   const cruiseId: number = req.body.cruiseId;
 
