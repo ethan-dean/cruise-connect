@@ -6,7 +6,6 @@ import getBackendUrl from "../utils/getBackendUrl";
 import "../css/DashboardPage.css";
 import missingImage from "../assets/missing-image.jpg";
 
-// TODO: Display joined cruises on this page
 export default function DashboardPage() {
   const [joinedCruisesData, setJoinedCruisesData] = useState<{cruiseId: number, departureDate: string, shipName: string}[]>([]);
 

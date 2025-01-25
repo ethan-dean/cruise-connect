@@ -14,6 +14,7 @@ import SendPasswordResetPage from './pages/SendPasswordResetPage'
 import ValidatePasswordResetPage from './pages/ValidatePasswordResetPage'
 import DashboardPage from './pages/DashboardPage'
 import JoinCruisePage from './pages/JoinCruisePage'
+import CruiseFeedPage from './pages/CruiseFeedPage'
 import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
 
@@ -40,7 +41,7 @@ export default function createRouter() {
             children: [
               { path: '/dashboard', element: <DashboardPage /> },
               { path: '/dashboard/join-cruise', element: <JoinCruisePage /> },
-              { path: '/dashboard/cruise-feed', element: <ProfilePage /> },
+              { path: '/dashboard/cruise-feed', element: <CruiseFeedPage /> },
               { path: '/dashboard/profile', element: <ProfilePage /> },
             ]
           },

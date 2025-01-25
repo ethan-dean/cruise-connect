@@ -125,7 +125,7 @@ cruisesRouter.post('/get-cruise-feed', authenticateToken, async (req: any, res: 
   }
 
   // Get user profiles based on userIds.
-  const [getProfilesErr, userProfiles] = await getUserProfilesFromIds(userIds);
+  const [getProfilesErr, userProfiles] = await getUserProfilesFromIds(userIds.filter(id => id !== req.token.userId));
   if (respondIf(!!getProfilesErr, res, 500, 'Server error, try again later...', 'Failed getUserProfilesFromIds ' + getProfilesErr)) return;
 
   res.status(200).json(userProfiles);
