@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { differenceInYears } from 'date-fns';
 
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
@@ -58,8 +59,14 @@ export default function CruiseFeedPage() {
       {userProfilesData.map((u, index) => { return (
         <div key={index}> 
           <img src={missingImage} />
-          <p>{u.firstName + ' ' + u.lastName}</p>
-          <p>{u?.bio}</p>
+          <p>{`Name: ${u.firstName} ${u.lastName}`}</p>
+          <p>{`Bio: ${u.bio}`}</p>
+          <p>{differenceInYears(new Date(), new Date(u.birthDate))} years old</p>
+          <p>{(u.instagram) ? `Instagram: ${u.instagram}` : ''}</p>
+          <p>{(u.snapchat) ? `Snapchat: ${u.snapchat}` : ''}</p>
+          <p>{(u.tiktok) ? `Tiktok: ${u.tiktok}` : ''}</p>
+          <p>{(u.twitter) ? `Twitter: ${u.twitter}` : ''}</p>
+          <p>{(u.facebook) ? `Facebook: ${u.facebook}` : ''}</p>
         </div>
         )}
       )}
