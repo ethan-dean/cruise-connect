@@ -1,12 +1,14 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import { isValid, parse, differenceInYears, isFuture } from 'date-fns';
 
 import { getMailer } from '../utils/getMailer';
 import { respondIf } from '../utils/respondIf';
 import { createAccessToken, createRefreshToken, verifyToken,
           authenticateToken, cookieSettings } from '../utils/tokenUtils';
 import { addUser, updateUser, getUserFromEmail,
-          getUserFromId, deleteUser } from '../database';
+          getUserFromId, deleteUser,
+          deleteJoinedCruisesByUser } from '../database';
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Constants.
@@ -72,10 +74,10 @@ usersRouter.post('/register', async (req: any, res: any) => {
   const emailCode = "";
   const emailCodeTimeout = 0;
   const emailCodeAttempts = MAX_EMAIL_CODE_ATTEMPTS;
-  const profileFinished = false;
+  const profileDone = false;
 
   // Save user to the database.
-  const [ err, _result ] = await addUser(formattedFirstName, formattedLastName, email, hashedPassword, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished);
+  const [ err, _result ] = await addUser(formattedFirstName, formattedLastName, email, hashedPassword, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileDone);
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed addUser: ' + err)) return;
 
   res.status(201).json({ message: 'User registered successfully.' });
@@ -278,6 +280,10 @@ usersRouter.post('/logout', (_req: any, res: any) => {
 usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) => {
   const userId: number = req.token.userId; 
 
+  // Delete user from any cruises they joined.
+  const [ deleteJoinedCruisesErr, _deleteJointedCruisesResults ] = await deleteJoinedCruisesByUser(userId);
+  if (respondIf(Boolean(deleteJoinedCruisesErr), res, 500, 'Failed to delete user', deleteJoinedCruisesErr)) return;
+
   // Delete user from the database.
   const [ err, _results ] = await deleteUser(userId);
   if (respondIf(Boolean(err), res, 500, 'Failed to delete user', err)) return;
@@ -308,6 +314,82 @@ usersRouter.post('/get-user-data', authenticateToken, async (req: any, res: any)
     lastName: getUserResult.lastName,
     email: getUserResult.email,
   });
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Update user profile endpoint.
+usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res: any) => {
+  const userId: number = req.token.userId;
+  const requestChanges = req.body;
+
+  // Check if request contains any invalid fields.
+  const allowedFields: Set<string> = new Set([
+    "firstName", "lastName", "birthDate", "bio",
+    "instagram", "snapchat", "tiktok", "twitter", "facebook"
+  ]);
+  const invalidFields = Object.keys(requestChanges).filter(key => !allowedFields.has(key));
+  if (respondIf(invalidFields.length > 0, res, 400, 'Server error, try again later...', `Invalid field(s): ${invalidFields.join(', ')}`)) return; 
+
+  // Validate format and constraints of birthDate.
+  if (requestChanges.birthDate) {
+    const parsedDate = parse(requestChanges.birthDate, 'yyyy-MM-dd', new Date());
+    
+    if (respondIf(!isValid(parsedDate), res, 400, '', 'Invalid birthDate format. User yyyy-MM-dd.')) return;
+    if (respondIf(isFuture(parsedDate), res, 400, '', 'Birthdate cannot be in the future.')) return;
+    const over100YearsOld: boolean = differenceInYears(new Date(), parsedDate) > 100;
+    if (respondIf(over100YearsOld, res, 400, '', 'Age cannnot be greater than 100 years.')) return;
+  }
+
+  // Update user in the database.
+  const [ err, _result ] = await updateUser(requestChanges, userId);
+  if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
+
+  res.status(201).json({ message: 'User updated successfully.' });
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Get user data endpoint.
+usersRouter.post('/is-profile-done', authenticateToken, async (req: any, res: any) => {
+  const userId: number = req.token.userId; 
+
+  // Get user from the database.
+  const [ getUserErr, getUserResult ] = await getUserFromId(userId);
+  const accountExists: boolean = !getUserErr && getUserResult;
+  if (respondIf(!accountExists, res, 500, 'Server error, try again later...', 'Failed getUserFromId ' + getUserErr)) return;
+
+  // If user profile has already been verified finished just return true.
+  if (getUserResult.profileDone) {
+    return res.status(200).json({
+      profileDone: true
+    });
+  }
+
+  function hasValue(s: string | null): boolean { return (!!s && s.length > 0) }
+  // Check if user profile has been finished, if so update 
+  const hasAtLeastOneSocial: boolean = hasValue(getUserResult.instagram) ||
+                                        hasValue(getUserResult.snapchat) ||
+                                        hasValue(getUserResult.tiktok) ||
+                                        hasValue(getUserResult.twitter) ||
+                                        hasValue(getUserResult.facebook);
+
+  const profileDone: boolean = hasValue(getUserResult.firstName) &&
+                                 hasValue(getUserResult.lastName) &&
+                                 hasValue(getUserResult.birthDate?.toISOString()) &&
+                                 hasValue(getUserResult.bio) &&
+                                 hasAtLeastOneSocial;
+
+  if (profileDone) {
+    const [ err, _result ] = await updateUser({ profileDone: true }, userId);
+    if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
+
+    return res.status(200).json({
+      profileDone: true
+    });
+  } else {
+    return res.status(200).json({
+      profileDone: false
+    });
+  }
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////

@@ -2,15 +2,19 @@ import { useState, useEffect, useContext } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import { AuthContext } from "../contexts/AuthContext";
+import { ProfileDoneContext } from '../contexts/ProfileDoneContext';
+
 import CountdownPopup from '../modules/countdownPopupModule/CountdownPopup';
 import getBackendUrl from '../utils/getBackendUrl';
 import '../css/VerifyEmailPage.css';
 
 export default function VerifyEmailPage() {
   const { isAuthenticated, login } = useContext(AuthContext);
+  const { isProfileDone, checkIfProfileDone } = useContext(ProfileDoneContext);
 
   if (isAuthenticated) {
-    return <Navigate to='/dashboard' />;
+    console.log(`verifyEmailpage: ${isProfileDone}`);
+    return <Navigate to={isProfileDone ? '/dashboard' : '/dashboard/create-profile'} />;
   }
 
   const [emailCode, setEmailCode] = useState('');
@@ -112,7 +116,10 @@ export default function VerifyEmailPage() {
         const data = await response.json();
         // Use AuthContext to mark user as logged in and store the JWT token in localStorage.
         login(data.accessToken);
-        navigate('/dashboard');
+        // Will navigate back to dashboard or create-profile, based on isAuthenticated and isProfileDone.
+        // If you try to use navigate it may flash based on trying to redirect to different pages 
+        // or multiples times.
+        checkIfProfileDone();
       } else {
         // Handle server response if it's not 200 range OK.
         const data = await response.json();

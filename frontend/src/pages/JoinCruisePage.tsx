@@ -68,9 +68,6 @@ export default function JoinCruisePage() {
   };
 
   const joinCruise = async () => {
-    console.log(JSON.stringify({
-          shipId: shipId,
-          cruiseDepartureDate: selectedDate!.toISOString().split('T')[0] }))
     try {
       const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/cruises/join-cruise`, {
         method: 'POST',

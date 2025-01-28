@@ -46,7 +46,7 @@ function setupDatabase() {
       emailCode VARCHAR(${maxStringLength}) NOT NULL,
       emailCodeTimeout INT UNSIGNED NOT NULL,
       emailCodeAttempts INT UNSIGNED NOT NULL,
-      profileFinished BOOLEAN NOT NULL,
+      profileDone BOOLEAN NOT NULL,
       birthDate DATE DEFAULT NULL,
       bio VARCHAR(${maxStringLength}) DEFAULT NULL,
       instagram VARCHAR(${maxStringLength}) DEFAULT NULL,
@@ -122,8 +122,8 @@ function validateStringFieldLengths(stringFields: Object) {
 // Database query functions for express server.
 
 // Add user to userData.
-async function addUser(firstName: string, lastName: string, email: string, password: string, emailVerified: boolean, emailCode: string, emailCodeTimeout: number, emailCodeAttempts: number, profileFinished: boolean): Promise<[string|null, any]> {
-  const addUserQuery = `INSERT INTO userData (firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished)
+async function addUser(firstName: string, lastName: string, email: string, password: string, emailVerified: boolean, emailCode: string, emailCodeTimeout: number, emailCodeAttempts: number, profileDone: boolean): Promise<[string|null, any]> {
+  const addUserQuery = `INSERT INTO userData (firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileDone)
                              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   // Validate string fileds to be correct length.
   const validationError = validateStringFieldLengths({firstName, lastName, email, password, emailCode});
@@ -132,7 +132,7 @@ async function addUser(firstName: string, lastName: string, email: string, passw
   }
   // Query database, pass in false for email_verified since it starts un-verified.
   try {
-    const results = await query(addUserQuery, [firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished]);
+    const results = await query(addUserQuery, [firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileDone]);
     if (results.affectedRows === 0) return [ 'DATABASE_QUERY_ERROR', null ];
     return [ null, results ];
   } catch (err: any) {
@@ -150,8 +150,8 @@ type UpdateUserParams = {
   emailCode?: string;
   emailCodeTimeout?: number;
   emailCodeAttempts?: number;
-  profileFinished?: boolean;
-  birthDate?: Date;
+  profileDone?: boolean;
+  birthDate?: string;
   bio?: string;
   instagram?: string;
   snapchat?: string;
@@ -193,7 +193,7 @@ async function updateUser(updateParams: UpdateUserParams, userId: number): Promi
 
 // Get user based on email and return their info.
 async function getUserFromEmail(email: string): Promise<[string|null, any]> {
-  const getUserQuery = `SELECT userId, firstName, lastName, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished
+  const getUserQuery = `SELECT userId, firstName, lastName, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileDone
                           FROM userData 
                           WHERE email = ?`;
   // Validate string fileds to be correct length.
@@ -214,7 +214,7 @@ async function getUserFromEmail(email: string): Promise<[string|null, any]> {
 
 // Get user based on userId and return their info.
 async function getUserFromId(userId: number): Promise<[string|null, any]> {
-  const getUserQuery = `SELECT firstName, lastName, email, password, emailVerified, emailCode, emailCodeTimeout, emailCodeAttempts, profileFinished
+  const getUserQuery = `SELECT *
                           FROM userData 
                           WHERE userId = ?`;
   // Query database.
@@ -375,6 +375,19 @@ async function deleteJoinedCruise(userId: number, cruiseId: number): Promise<[st
   }
 }
 
+// Delete joined cruises by user from joinedCruises when a user deletes all their cruises.
+async function deleteJoinedCruisesByUser(userId: number): Promise<[string | null, any]> {
+  const deleteJoinedCruiseQuery = `DELETE FROM joinedCruises WHERE userId = ?`;
+
+  try {
+    const results = await query(deleteJoinedCruiseQuery, [userId]);
+    if (results.affectedRows === 0) return ['DATABASE_QUERY_ERROR', null];
+    return [null, results];
+  } catch (err: any) {
+    return [err, null];
+  }
+}
+
 // Get userIds of users who joined a specific cruise.
 async function getJoinedCruisesByCruise(cruiseId: number): Promise<[string | null, number[]]> {
   const getJoinedCruisesQuery = `SELECT userId FROM joinedCruises WHERE cruiseId = ?`;
@@ -419,6 +432,7 @@ export {
   getCruiseById,
   addJoinedCruise,
   deleteJoinedCruise,
+  deleteJoinedCruisesByUser,
   getJoinedCruisesByUser,
   getJoinedCruisesByCruise,
 };

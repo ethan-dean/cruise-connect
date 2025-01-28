@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 
 
+// TODO: Endpoints for authenticate token should probably also check if the user is finished with account
+//       just in case, through token or DB.
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function to standardize JWT creation in API endpoints.
 function createAccessToken (userId: number) {

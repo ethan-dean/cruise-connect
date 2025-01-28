@@ -6,13 +6,13 @@ import AuthProtectedRoutesLayout from './layouts/AuthProtectedRoutesLayout'
 
 // Page Imports
 import HomePage from './pages/HomePage'
-import AboutPage from './pages/AboutPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
 import SendPasswordResetPage from './pages/SendPasswordResetPage'
 import ValidatePasswordResetPage from './pages/ValidatePasswordResetPage'
 import DashboardPage from './pages/DashboardPage'
+import ProfileCreatePage from './pages/ProfileCreatePage'
 import JoinCruisePage from './pages/JoinCruisePage'
 import CruiseFeedPage from './pages/CruiseFeedPage'
 import ProfilePage from './pages/ProfilePage'
@@ -28,24 +28,24 @@ export default function createRouter() {
         path: '/',
         element: <HeaderLayout />,
         children: [
-          { path: '/', element: <HomePage /> },
-          { path: '/about', element: <AboutPage /> },
-          { path: '/login', element: <LoginPage /> },
-          { path: '/register', element: <RegisterPage /> },
-          { path: '/verify-email', element: <VerifyEmailPage /> },
-          { path: '/send-password-reset', element: <SendPasswordResetPage /> },
-          { path: '/validate-password-reset', element: <ValidatePasswordResetPage /> },
+          { path: '', element: <HomePage /> },
+          { path: 'login', element: <LoginPage /> },
+          { path: 'register', element: <RegisterPage /> },
+          { path: 'verify-email', element: <VerifyEmailPage /> },
+          { path: 'send-password-reset', element: <SendPasswordResetPage /> },
+          { path: 'validate-password-reset', element: <ValidatePasswordResetPage /> },
           {
             element: <AuthProtectedRoutesLayout />,
-            path: '/dashboard',
+            path: 'dashboard',
             children: [
-              { path: '/dashboard', element: <DashboardPage /> },
-              { path: '/dashboard/join-cruise', element: <JoinCruisePage /> },
-              { path: '/dashboard/cruise-feed', element: <CruiseFeedPage /> },
-              { path: '/dashboard/profile', element: <ProfilePage /> },
+              { path: '', element: <DashboardPage /> },
+              { path: 'create-profile', element: <ProfileCreatePage /> },
+              { path: 'join-cruise', element: <JoinCruisePage /> },
+              { path: 'cruise-feed', element: <CruiseFeedPage /> },
+              { path: 'profile', element: <ProfilePage /> },
             ]
           },
-          { path: '/*', element: <NotFoundPage />},
+          { path: '*', element: <NotFoundPage />},
         ]
       }
     ]

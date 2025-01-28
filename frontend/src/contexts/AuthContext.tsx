@@ -2,21 +2,21 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 
 // Define the AuthContext type
 interface AuthContextType {
-  isAuthenticated: boolean;
+  isAuthenticated: boolean | null;
   login: (token: string) => void;
   logout: () => void;
 }
 
 // Create AuthContext with default values
 export const AuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
+  isAuthenticated: null,
   login: () => {},
   logout: () => {},
 });
 
 // Provider component for AuthContext
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   // Check if there's a valid JWT in local storage
   useEffect(() => {
