@@ -12,7 +12,7 @@ export default function HeaderLayout() {
     <div>
       <header className='header-container'>
         <div className = 'header-logo-container'>
-          <Link className='header-logo' to={isAuthenticated && isProfileDone ? '/dashboard' : '/'}>Website</Link>
+          <Link className='header-logo' to='/'>Website</Link>
         </div>
         <div className='header-options-container'>
           { isAuthenticated ?

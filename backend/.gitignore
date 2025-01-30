@@ -1,6 +1,10 @@
 # Secret keys
 .env
 
+# Uploaded test pictures
+profilePictureDb/
+*.webp
+
 # Node
 node_modules
 

@@ -5,12 +5,13 @@ import { differenceInYears } from 'date-fns';
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import "../css/CruiseFeedPage.css";
-import missingImage from "../assets/missing-image.jpg";
+
 
 type UserProfileType = {
   firstName: string;
   lastName: string;
   birthDate: string;
+  imageId: string;
   bio?: string;
   instagram?: string;
   snapchat?: string;
@@ -58,7 +59,7 @@ export default function CruiseFeedPage() {
       <p>Cruise Feed</p>
       {userProfilesData.map((u, index) => { return (
         <div key={index}> 
-          <img src={missingImage} />
+          <img src={`${getBackendUrl()}/profilePictureDb/${u.imageId}.webp`} />
           <p>{`Name: ${u.firstName} ${u.lastName}`}</p>
           <p>{`Bio: ${u.bio}`}</p>
           <p>{differenceInYears(new Date(), new Date(u.birthDate))} years old</p>

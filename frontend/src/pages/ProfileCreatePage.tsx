@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { DateCalendar, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
@@ -17,12 +17,14 @@ export default function ProfileCreatePage() {
   const [bio, setBio] = useState<string>('');
   const [socialHandles, setSocialHandles] = useState<Record<string, string>>({});
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const [showCalendar, setShowCalendar] = useState(true);
   const [showBio, setShowBio] = useState(false);
   const [showHandles, setShowHandles] = useState(false);
+  const [showPictureSelector, setShowPictureSelector] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-
-  const navigate = useNavigate();  
 
   const { isProfileDone, checkIfProfileDone } = useContext(ProfileDoneContext);
   if (isProfileDone) {
@@ -34,6 +36,37 @@ export default function ProfileCreatePage() {
       ...prevState,
       [platform]: value,
     }));
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Handle file selection
+    if (event.target.files) setSelectedFile(event.target.files[0]);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return alert("Select an image first");
+
+    const formData = new FormData();
+    formData.append("image", selectedFile);
+
+    // Upload profile picture and display processed image
+    try {
+      const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/users/upload-profile-picture`, {
+          method: "POST",
+          body: formData
+      });
+
+      if (!response.ok) throw new Error("Upload failed");
+
+      // Get the processed image as a blob
+      const blob = await response.blob();
+      const objectURL = URL.createObjectURL(blob);
+      setPreviewImage(objectURL);
+
+      alert("Upload successful!");
+    } catch (error) {
+      alert("Error uploading file");
+    }
   };
 
   const updateProfile = async () => {
@@ -117,7 +150,29 @@ export default function ProfileCreatePage() {
           ))}
           <button
               className='profile-create-page__next-button' 
-              onClick={() => { setShowHandles(false); setShowSummary(true); } }
+              onClick={() => { setShowHandles(false); setShowPictureSelector(true); } }
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {showPictureSelector && (
+        <div>
+          <h2>Upload Profile Picture</h2>
+            <input type="file" accept="image/*" onChange={handleFileChange} />
+            <button onClick={handleUpload}>Upload</button>
+
+            {previewImage && (
+              <>
+                <h3>Processed Image Preview</h3>
+                <img src={previewImage} alt="Processed Preview" width={256} />
+              </>
+            )}
+
+          <button
+            className='profile-create-page__next-button' 
+            onClick={() => { setShowPictureSelector(false); setShowSummary(true); } }
           >
             Next
           </button>
@@ -126,6 +181,12 @@ export default function ProfileCreatePage() {
 
       {showSummary && (
         <div>
+          {previewImage && (
+            <>
+              <p>Processed Image Preview</p>
+              <img src={previewImage} alt="Processed Preview" width={256} />
+            </>
+          )}
           <p>{selectedDate!.toDateString()}</p>
           <p>{bio}</p>
           {Object.entries(socialHandles).map(([platform, handle], index) => { 

@@ -48,6 +48,7 @@ function setupDatabase() {
       emailCodeAttempts INT UNSIGNED NOT NULL,
       profileDone BOOLEAN NOT NULL,
       birthDate DATE DEFAULT NULL,
+      imageId VARCHAR(${maxStringLength}) DEFAULT NULL,
       bio VARCHAR(${maxStringLength}) DEFAULT NULL,
       instagram VARCHAR(${maxStringLength}) DEFAULT NULL,
       snapchat VARCHAR(${maxStringLength}) DEFAULT NULL,
@@ -151,6 +152,7 @@ type UpdateUserParams = {
   emailCodeTimeout?: number;
   emailCodeAttempts?: number;
   profileDone?: boolean;
+  imageId?: string;
   birthDate?: string;
   bio?: string;
   instagram?: string;
@@ -234,7 +236,7 @@ async function getUserProfilesFromIds(userIds: number[]): Promise<[string | null
 
   // Construct a dynamic SQL query with placeholders.
   const placeholders = userIds.map(() => '?').join(',');
-  const getUsersQuery = `SELECT firstName, lastName, birthDate, bio, instagram, snapchat, tiktok, twitter, facebook
+  const getUsersQuery = `SELECT firstName, lastName, birthDate, imageId, bio, instagram, snapchat, tiktok, twitter, facebook
                          FROM userData
                          WHERE userId IN (${placeholders})`;
 

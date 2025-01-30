@@ -45,7 +45,7 @@ expressServer.use('/api/v1/cruises', cruisesRouter);
 // in the build folder, will just serve index.html. Client side routing is
 // going to make sure that the correct content will be loaded.
 expressServer.use((req: any, res: any, next: any) => {
-  if (/(.ico|.js|.css|.jpg|.png|.map|.ttf|.svg)$/i.test(req.path)) {
+  if (/(.ico|.js|.css|.jpg|.png|.webp|.map|.ttf|.svg)$/i.test(req.path)) {
     next();
   } else {
     res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -55,7 +55,18 @@ expressServer.use((req: any, res: any, next: any) => {
   }
 });
 
-expressServer.use(express.static(path.resolve('./dist')));
+// Serve up backend static files uploaded from users(images).
+expressServer.use("/profilePictureDb", 
+  express.static(path.resolve('./profilePictureDb/'), {
+        maxAge: "1d", // Cache images for 1 day
+        etag: false, // Disable ETag headers
+    })
+);
+
+// Serve up frontend static files (images, etc.).
+expressServer.use(
+  express.static(path.resolve('./dist'))
+);
 
 expressServer.use((_: any, res: any) => {
     res.status(200).send('We are under construction... check back soon!');

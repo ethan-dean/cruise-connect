@@ -1,5 +1,10 @@
-import express from 'express';
-import bcrypt from 'bcryptjs';
+import express from 'express';       // Host JS backends
+import bcrypt from 'bcryptjs';       // Encrypt passwords
+import multer from "multer";         // Handle file uploads
+import sharp from "sharp";           // Image manipulation
+import { v4 as uuidv4 } from "uuid"; // Generate unique filenames
+import path from "path";             // Filesystem managaement
+import fs from "fs/promises";        // File I/O with async
 import { isValid, parse, differenceInYears, isFuture } from 'date-fns';
 
 import { getMailer } from '../utils/getMailer';
@@ -18,6 +23,13 @@ const MAX_EMAIL_CODE_ATTEMPTS: number = 5;
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Initialize server app.
 const usersRouter = express.Router();
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Initialize profile picture directory and multer configuration.
+const uploadDir = path.resolve(`./profilePictureDb/`);
+fs.mkdir(uploadDir, { recursive: true }).catch(console.error);
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Util function to hash and salt passwords (in case of data leaks).
@@ -322,9 +334,9 @@ usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res
   const userId: number = req.token.userId;
   const requestChanges = req.body;
 
-  // Check if request contains any invalid fields.
+  // Check if request contains any invalid fields for userProfile data.
   const allowedFields: Set<string> = new Set([
-    "firstName", "lastName", "birthDate", "bio",
+    "firstName", "lastName", "birthDate", "imageId", "bio",
     "instagram", "snapchat", "tiktok", "twitter", "facebook"
   ]);
   const invalidFields = Object.keys(requestChanges).filter(key => !allowedFields.has(key));
@@ -345,6 +357,63 @@ usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
 
   res.status(201).json({ message: 'User updated successfully.' });
+});
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Upload and compress profile picture endpoint.
+usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('image'), async (req: any, res: any) => {
+  const userId: number = req.token.userId;
+
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: "No file uploaded" });
+      return;
+    }
+
+    // Validate file type (only allow JPEG & PNG)
+    if (!["image/jpeg", "image/png"].includes(req.file.mimetype)) {
+      res.status(400).json({ error: "Invalid file type. Only JPEG and PNG allowed." });
+      return;
+    }
+
+    // Validate file size (limit to 2MB)
+    if (req.file.size > 2 * 1024 * 1024) {
+      res.status(400).json({ error: "File too large. Max size is 2MB." });
+      return;
+    }
+
+    // Get user from the database.
+    const [ getUserErr, getUserResult ] = await getUserFromId(userId);
+    if (respondIf(!!getUserErr, res, 500, 'Server error, try again later...', 'Failed getUserFromId ' + getUserErr)) return;
+
+    // Generate new imageId if user does not have one.
+    let filePath: string | null = null;
+    if (getUserResult.imageId) {
+      filePath = path.join(uploadDir, `${getUserResult.imageId}.webp`);
+    } else {
+      const imageId = uuidv4();
+      filePath = path.join(uploadDir, `${imageId}.webp`);
+      // Update user in the database with imageId.
+      const [ err, _result ] = await updateUser({ imageId: imageId }, userId);
+      if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
+    }
+
+    // Resize & compress the image
+    const processedImage = await sharp(req.file.buffer)
+      .resize(512, 512) // Resize to 512x512
+      .webp({ quality: 80 }) // Convert to WebP (smaller size, high quality)
+      .toBuffer();
+
+    // Save compressed image to disk asynchronously
+    await fs.writeFile(filePath, processedImage);
+
+    // Send the compressed image back to user
+    res.setHeader("Content-Type", "image/webp");
+    res.send(processedImage);
+  } catch (error) {
+    res.setHeader("Content-Type", "application/json");
+    res.send(error);
+  }
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -375,6 +444,7 @@ usersRouter.post('/is-profile-done', authenticateToken, async (req: any, res: an
   const profileDone: boolean = hasValue(getUserResult.firstName) &&
                                  hasValue(getUserResult.lastName) &&
                                  hasValue(getUserResult.birthDate?.toISOString()) &&
+                                 hasValue(getUserResult.imageId) &&
                                  hasValue(getUserResult.bio) &&
                                  hasAtLeastOneSocial;
 
