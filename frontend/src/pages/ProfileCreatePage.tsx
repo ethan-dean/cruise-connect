@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { Navigate } from "react-router-dom";
-import { DateCalendar, LocalizationProvider } from "@mui/x-date-pickers";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 import { ProfileDoneContext } from '../contexts/ProfileDoneContext';
@@ -13,12 +13,12 @@ const socialSites = [ 'instagram', 'snapchat', 'tiktok', 'twitter', 'facebook' ]
 
 // TODO: Add ability to go back in steps...
 export default function ProfileCreatePage() {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [bio, setBio] = useState<string>('');
   const [socialHandles, setSocialHandles] = useState<Record<string, string>>({});
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   const [showCalendar, setShowCalendar] = useState(true);
   const [showBio, setShowBio] = useState(false);
@@ -38,16 +38,12 @@ export default function ProfileCreatePage() {
     }));
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     // Handle file selection
-    if (event.target.files) setSelectedFile(event.target.files[0]);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return alert("Select an image first");
+    if (!event.target.files) return;
 
     const formData = new FormData();
-    formData.append("image", selectedFile);
+    formData.append("image", event.target.files[0]);
 
     // Upload profile picture and display processed image
     try {
@@ -62,10 +58,8 @@ export default function ProfileCreatePage() {
       const blob = await response.blob();
       const objectURL = URL.createObjectURL(blob);
       setPreviewImage(objectURL);
-
-      alert("Upload successful!");
     } catch (error) {
-      alert("Error uploading file");
+      setGeneralError("Error uploading file");
     }
   };
 
@@ -104,7 +98,7 @@ export default function ProfileCreatePage() {
       {showCalendar && (
         <div>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DateCalendar
+            <DatePicker
               value={selectedDate}
               onChange={(date) => setSelectedDate(date)}
             />
@@ -124,6 +118,12 @@ export default function ProfileCreatePage() {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
           />
+          <button
+            className='profile-create-page__previous-button' 
+            onClick={() => { setShowBio(false); setShowCalendar(true); } }
+          >
+            Previous
+          </button>
           <button
             className='profile-create-page__next-button' 
             onClick={() => { setShowBio(false); setShowHandles(true); } }
@@ -149,6 +149,12 @@ export default function ProfileCreatePage() {
             </div>
           ))}
           <button
+            className='profile-create-page__previous-button' 
+            onClick={() => { setShowHandles(false); setShowBio(true); } }
+          >
+            Previous
+          </button>
+          <button
               className='profile-create-page__next-button' 
               onClick={() => { setShowHandles(false); setShowPictureSelector(true); } }
           >
@@ -161,7 +167,9 @@ export default function ProfileCreatePage() {
         <div>
           <h2>Upload Profile Picture</h2>
             <input type="file" accept="image/*" onChange={handleFileChange} />
-            <button onClick={handleUpload}>Upload</button>
+            { 
+              // <button onClick={handleUpload}>Upload</button> 
+            } 
 
             {previewImage && (
               <>
@@ -170,6 +178,12 @@ export default function ProfileCreatePage() {
               </>
             )}
 
+          <button
+            className='profile-create-page__previous-button' 
+            onClick={() => { setShowPictureSelector(false); setShowHandles(true); } }
+          >
+            Previous
+          </button>
           <button
             className='profile-create-page__next-button' 
             onClick={() => { setShowPictureSelector(false); setShowSummary(true); } }
@@ -195,6 +209,12 @@ export default function ProfileCreatePage() {
             )
           })}
           <button
+            className='profile-create-page__previous-button' 
+            onClick={() => { setShowSummary(false); setShowPictureSelector(true); } }
+          >
+            Previous
+          </button>
+          <button
             className='profile-create-page__save-button' 
             onClick={() => updateProfile() }
           >
@@ -202,6 +222,8 @@ export default function ProfileCreatePage() {
           </button>
         </div>
       )}
+
+      <p>{generalError}</p>
     </div>
   );
 }
