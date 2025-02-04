@@ -1,7 +1,8 @@
-const mysql = require('mysql2');
+// const mysql = require('mysql2');
+import mysql from 'mysql2';
 
-import { dbConnectionConfig } from './config';
-import { setupTable } from './utils/setupTable';
+import { dbConnectionConfig } from './config.js';
+import { setupTable } from './utils/setupTable.js';
 
 
 // The length of a string in the database (60 chars since bcrypt's hash function outputs 60 chars).
@@ -419,7 +420,6 @@ async function getJoinedCruisesByUser(userId: number): Promise<[string | null, n
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function exports for 'database.ts'.
 export {
-  maxStringLength,
   addUser,
   updateUser,
   getUserFromEmail,

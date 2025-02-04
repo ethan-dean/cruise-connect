@@ -7,15 +7,14 @@ import path from "path";             // Filesystem managaement
 import fs from "fs/promises";        // File I/O with async
 import { isValid, parse, differenceInYears, isFuture } from 'date-fns';
 
-import { getMailer } from '../utils/getMailer';
-import { respondIf } from '../utils/respondIf';
-import { filterProfanity } from "../utils/filterProfanity";
+import { getMailer } from '../utils/getMailer.js';
+import { respondIf } from '../utils/respondIf.js';
+import { filterProfanity } from "../utils/filterProfanity.js";
 import { createAccessToken, createRefreshToken, verifyToken,
-          authenticateToken, cookieSettings } from '../utils/tokenUtils';
-import { maxStringLength,
-          addUser, updateUser, getUserFromEmail,
+          authenticateToken, cookieSettings } from '../utils/tokenUtils.js';
+import { addUser, updateUser, getUserFromEmail,
           getUserFromId, deleteUser,
-          deleteJoinedCruisesByUser } from '../database';
+          deleteJoinedCruisesByUser } from '../database.js';
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Constants.

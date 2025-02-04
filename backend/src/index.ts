@@ -1,5 +1,5 @@
-import { expressServer } from './server';
-import { serverPort } from './config';
+import { expressServer } from './server.js';
+import { serverPort } from './config.js';
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Start the http server that takes requests from nginx.

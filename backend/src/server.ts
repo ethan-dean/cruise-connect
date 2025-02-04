@@ -5,9 +5,9 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 
-import { devServerPort } from './config';
-import usersRouter from './apiRoutes/usersRoutes'
-import cruisesRouter from './apiRoutes/cruisesRoutes'
+import { devServerPort } from './config.js';
+import usersRouter from './apiRoutes/usersRoutes.js'
+import cruisesRouter from './apiRoutes/cruisesRoutes.js'
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////

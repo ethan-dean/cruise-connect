@@ -1,7 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-const mysql = require('mysql2');
-
 
 function setupTable(connection: any, createTableQuery: string) {
   // Extract table name from the query

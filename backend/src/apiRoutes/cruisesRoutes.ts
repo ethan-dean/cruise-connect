@@ -1,13 +1,13 @@
 import express from 'express';
 
-import { respondIf } from '../utils/respondIf';
-import { authenticateToken } from '../utils/tokenUtils';
+import { respondIf } from '../utils/respondIf.js';
+import { authenticateToken } from '../utils/tokenUtils.js';
 import { getCompaniesData, getCompanyDataById,
           getShipsDataByCompany, getShipDataById, 
           addCruise, getCruiseByDateAndShip, getCruiseById,
           addJoinedCruise, deleteJoinedCruise, getJoinedCruisesByUser, getJoinedCruisesByCruise,
           getUserProfilesFromIds
-        } from '../database'
+        } from '../database.js'
 
 
 // TODO: Improve robustness of these endpoints (find breaking issues)
