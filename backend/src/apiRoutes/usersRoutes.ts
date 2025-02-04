@@ -9,9 +9,11 @@ import { isValid, parse, differenceInYears, isFuture } from 'date-fns';
 
 import { getMailer } from '../utils/getMailer';
 import { respondIf } from '../utils/respondIf';
+import { filterProfanity } from "../utils/filterProfanity";
 import { createAccessToken, createRefreshToken, verifyToken,
           authenticateToken, cookieSettings } from '../utils/tokenUtils';
-import { addUser, updateUser, getUserFromEmail,
+import { maxStringLength,
+          addUser, updateUser, getUserFromEmail,
           getUserFromId, deleteUser,
           deleteJoinedCruisesByUser } from '../database';
 
@@ -336,7 +338,7 @@ usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res
 
   // Check if request contains any invalid fields for userProfile data.
   const allowedFields: Set<string> = new Set([
-    "firstName", "lastName", "birthDate", "imageId", "bio",
+    "firstName", "lastName", "birthDate", "bio",
     "instagram", "snapchat", "tiktok", "twitter", "facebook"
   ]);
   const invalidFields = Object.keys(requestChanges).filter(key => !allowedFields.has(key));
@@ -344,13 +346,25 @@ usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res
 
   // Validate format and constraints of birthDate.
   if (requestChanges.birthDate) {
+    const minAge: number = 15;
+    const maxAge: number = 120;
     const parsedDate = parse(requestChanges.birthDate, 'yyyy-MM-dd', new Date());
     
     if (respondIf(!isValid(parsedDate), res, 400, '', 'Invalid birthDate format. User yyyy-MM-dd.')) return;
     if (respondIf(isFuture(parsedDate), res, 400, '', 'Birthdate cannot be in the future.')) return;
-    const over100YearsOld: boolean = differenceInYears(new Date(), parsedDate) > 100;
-    if (respondIf(over100YearsOld, res, 400, '', 'Age cannnot be greater than 100 years.')) return;
+    const underMinAge: boolean = differenceInYears(new Date(), parsedDate) < minAge;
+    if (respondIf(underMinAge, res, 400, '', `Age cannnot be less than ${minAge} years.`)) return;
+    const overMaxAge: boolean = differenceInYears(new Date(), parsedDate) > maxAge;
+    if (respondIf(overMaxAge, res, 400, '', `Age cannnot be greater than ${maxAge} years.`)) return;
   }
+
+  // Validate strings (length + profanity).
+  Object.entries(requestChanges).forEach(([key, value]) => {
+    if (typeof(value) === "string") {
+      if (respondIf(value.length < 1, res, 400, '', `<${key}> field cannot be empty`)) return;
+      if (respondIf(filterProfanity(value) !== value, res, 400, '', `<${key}> field cannot contain profanity`)) return;
+    }
+  });
 
   // Update user in the database.
   const [ err, _result ] = await updateUser(requestChanges, userId);

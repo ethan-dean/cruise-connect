@@ -2,23 +2,27 @@ import { useState, useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { differenceInYears, isFuture } from "date-fns";
 
 import { ProfileDoneContext } from '../contexts/ProfileDoneContext';
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
+import filterProfanity from "../utils/filterProfanity";
 import "../css/JoinCruisePage.css";
 
 
 const socialSites = [ 'instagram', 'snapchat', 'tiktok', 'twitter', 'facebook' ];
 
-// TODO: Add ability to go back in steps...
 export default function ProfileCreatePage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [bio, setBio] = useState<string>('');
   const [socialHandles, setSocialHandles] = useState<Record<string, string>>({});
-
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [generalError, setGeneralError] = useState<string | null>(null);
+
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [bioError, setBioError] = useState<string | null>(null);
+  const [socialErrors, setSocialErrors] = useState<Record<string, string>>({});
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const [showCalendar, setShowCalendar] = useState(true);
   const [showBio, setShowBio] = useState(false);
@@ -30,6 +34,44 @@ export default function ProfileCreatePage() {
   if (isProfileDone) {
     return <Navigate to='/dashboard' />;
   }
+
+  const validateCalendar = (date: Date | null): string => {
+    const minAge: number = 15;
+    const maxAge: number = 120;
+
+    if (date) {
+      if (isFuture(date)) return "Birthday cannot be in the future";
+
+      const age: number = differenceInYears(new Date(), date);
+      if (age < minAge) return `Age cannot be less than ${minAge} years`;
+      if (age > maxAge) return `Age cannot be over ${maxAge} years`;
+    }
+
+    return "";
+  };
+
+  const validateBio = (currentBio: string | null): string => {
+    const maxLength: number = 60;
+
+    if (currentBio) {
+      if (currentBio.length < 1) return "Bio required";
+      if (currentBio.length > maxLength) return `Max length ${maxLength} characters`;
+      if (filterProfanity(currentBio) !== currentBio) return "Let's keep it clean...";
+    }
+
+    return "";
+  };
+
+  const validateHandle = (handle: string): string => {
+   const maxLength: number = 60;
+
+    if (handle) {
+      if (handle.length > maxLength) return `Max length ${maxLength} characters`;
+      if (filterProfanity(handle) !== handle) return "No accounts with profane usernames...";
+    }
+
+    return "";
+  };
 
   const handleSocialChange = (platform: string, value: string) => {
     setSocialHandles((prevState) => ({
@@ -52,14 +94,16 @@ export default function ProfileCreatePage() {
           body: formData
       });
 
-      if (!response.ok) throw new Error("Upload failed");
+      if (!response.ok) {
+        setImageError("Upload failed");
+      }
 
       // Get the processed image as a blob
       const blob = await response.blob();
       const objectURL = URL.createObjectURL(blob);
       setPreviewImage(objectURL);
     } catch (error) {
-      setGeneralError("Error uploading file");
+      setImageError("Error uploading file");
     }
   };
 
@@ -100,12 +144,18 @@ export default function ProfileCreatePage() {
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DatePicker
               value={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
+              onChange={(date) => {
+                setSelectedDate(date);
+                setCalendarError(validateCalendar(date));
+              }}
             />
           </LocalizationProvider>
+          {calendarError && <p className='profile-create-page__error'>{calendarError}</p>}
+
           <button
             className='profile-create-page__next-button' 
             onClick={() => { setShowCalendar(false); setShowBio(true); } }
+            disabled={!!calendarError || !selectedDate}
           >
             Next
           </button>
@@ -116,8 +166,13 @@ export default function ProfileCreatePage() {
         <div>
           <textarea
             value={bio}
-            onChange={(e) => setBio(e.target.value)}
+            onChange={(e) => {
+              setBio(e.target.value);
+              setBioError(validateBio(e.target.value));
+            }}
           />
+          {bioError && <p className='profile-create-page__error'>{bioError}</p>}
+
           <button
             className='profile-create-page__previous-button' 
             onClick={() => { setShowBio(false); setShowCalendar(true); } }
@@ -127,6 +182,7 @@ export default function ProfileCreatePage() {
           <button
             className='profile-create-page__next-button' 
             onClick={() => { setShowBio(false); setShowHandles(true); } }
+            disabled={!!bioError || !bio}
           >
             Next
           </button>
@@ -144,10 +200,15 @@ export default function ProfileCreatePage() {
               <input
                 type='text'
                 value={socialHandles[s] || ''}
-                onChange={(e) => handleSocialChange(s, e.target.value)}
+                onChange={(e) => { 
+                  handleSocialChange(s, e.target.value);
+                  setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
+                }}
               />
+              {socialErrors[s] && <p className='profile-create-page__error'>{socialErrors[s]}</p>}
             </div>
           ))}
+
           <button
             className='profile-create-page__previous-button' 
             onClick={() => { setShowHandles(false); setShowBio(true); } }
@@ -157,6 +218,9 @@ export default function ProfileCreatePage() {
           <button
               className='profile-create-page__next-button' 
               onClick={() => { setShowHandles(false); setShowPictureSelector(true); } }
+              disabled={Object.entries(socialErrors).some(e => !!e) ||
+                        Object.entries(socialHandles).every(h => !h) ||
+                        Object.entries(socialHandles).length === 0}
           >
             Next
           </button>
@@ -166,17 +230,15 @@ export default function ProfileCreatePage() {
       {showPictureSelector && (
         <div>
           <h2>Upload Profile Picture</h2>
-            <input type="file" accept="image/*" onChange={handleFileChange} />
-            { 
-              // <button onClick={handleUpload}>Upload</button> 
-            } 
+          <input type="file" accept="image/*" onChange={handleFileChange} />
+          {imageError && <p className='profile-create-page__error'>{imageError}</p>}
 
-            {previewImage && (
-              <>
-                <h3>Processed Image Preview</h3>
-                <img src={previewImage} alt="Processed Preview" width={256} />
-              </>
-            )}
+          {previewImage && (
+            <>
+              <h3>Processed Image Preview</h3>
+              <img src={previewImage} alt="Processed Preview" width={256} />
+            </>
+          )}
 
           <button
             className='profile-create-page__previous-button' 
@@ -187,6 +249,7 @@ export default function ProfileCreatePage() {
           <button
             className='profile-create-page__next-button' 
             onClick={() => { setShowPictureSelector(false); setShowSummary(true); } }
+            disabled={!!imageError || !previewImage}
           >
             Next
           </button>
@@ -222,8 +285,6 @@ export default function ProfileCreatePage() {
           </button>
         </div>
       )}
-
-      <p>{generalError}</p>
     </div>
   );
 }

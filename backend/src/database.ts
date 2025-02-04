@@ -5,7 +5,7 @@ import { setupTable } from './utils/setupTable';
 
 
 // The length of a string in the database (60 chars since bcrypt's hash function outputs 60 chars).
-const maxStringLength = 60;
+const maxStringLength: number = 60;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Create a connection to the database.
@@ -419,6 +419,7 @@ async function getJoinedCruisesByUser(userId: number): Promise<[string | null, n
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Function exports for 'database.ts'.
 export {
+  maxStringLength,
   addUser,
   updateUser,
   getUserFromEmail,
