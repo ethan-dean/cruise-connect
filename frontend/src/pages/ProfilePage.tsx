@@ -38,6 +38,7 @@ export default function ProfileCreatePage() {
 
   const [showEditMode, setShowEditMode] = useState<boolean>(false);
   const [showImagePopup, setShowImagePopup] = useState<boolean>(false);
+  const [imageCacheBuster, setImageCacheBuster] = useState<number>(Date.now());
 
   const getUserProfileData = async () => {
     try {
@@ -122,6 +123,9 @@ export default function ProfileCreatePage() {
       const blob = await response.blob();
       const objectURL = URL.createObjectURL(blob);
       setPreviewImage(objectURL);
+      // Don't need to get the processed image as a blob just 
+      // cache bust with the url for the profile picture 
+      setImageCacheBuster(Date.now());
     } catch (error) {
       setImageError("Error uploading file");
     }
@@ -159,7 +163,7 @@ export default function ProfileCreatePage() {
       <p>Email: {userData.email}</p>
       <p>Age: {differenceInYears(new Date(), parseISO(userData.birthDate))}</p>
       <button onClick={() => setShowImagePopup(true)}>
-        <img src={`${getBackendUrl()}/profilePictureDb/${userData.imageId}.webp`} />
+        <img src={`${getBackendUrl()}/profilePictureDb/${userData.imageId}.webp?cache=${imageCacheBuster}`} />
       </button>
       <div>
         {!showEditMode ? (

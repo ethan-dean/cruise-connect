@@ -58,7 +58,7 @@ expressServer.use((req: any, res: any, next: any) => {
 // Serve up backend static files uploaded from users(images).
 expressServer.use("/profilePictureDb", 
   express.static(path.resolve('./profilePictureDb/'), {
-        maxAge: "1d", // Cache images for 1 day
+        maxAge: "1h", // Cache images for 1 hour
         etag: false, // Disable ETag headers
     })
 );
