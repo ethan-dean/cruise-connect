@@ -314,7 +314,7 @@ usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Get user data endpoint.
-usersRouter.post('/get-user-data', authenticateToken, async (req: any, res: any) => {
+usersRouter.post('/get-user-profile', authenticateToken, async (req: any, res: any) => {
   const userId: number = req.token.userId; 
 
   // Get user from the database.
@@ -326,6 +326,14 @@ usersRouter.post('/get-user-data', authenticateToken, async (req: any, res: any)
     firstName: getUserResult.firstName,
     lastName: getUserResult.lastName,
     email: getUserResult.email,
+    birthDate: getUserResult.birthDate,
+    imageId: getUserResult.imageId,
+    bio: getUserResult.bio,
+    instagram: getUserResult.instagram,
+    snapchat: getUserResult.snapchat,
+    tiktok: getUserResult.tiktok,
+    twitter: getUserResult.twitter,
+    facebook: getUserResult.facebook,
   });
 });
 
@@ -358,12 +366,14 @@ usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res
   }
 
   // Validate strings (length + profanity).
+  const errors: string[] = [];
   Object.entries(requestChanges).forEach(([key, value]) => {
     if (typeof(value) === "string") {
-      if (respondIf(value.length < 1, res, 400, '', `<${key}> field cannot be empty`)) return;
-      if (respondIf(filterProfanity(value) !== value, res, 400, '', `<${key}> field cannot contain profanity`)) return;
+      if (value.length < 1) errors.concat(`<${key}> field cannot be empty`);
+      if (filterProfanity(value) !== value) errors.concat(`<${key}> field cannot contain profanity`);
     }
   });
+  if (respondIf(errors.length > 0, res, 400, '', errors.join('\n'))) return;
 
   // Update user in the database.
   const [ err, _result ] = await updateUser(requestChanges, userId);
@@ -374,6 +384,7 @@ usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Upload and compress profile picture endpoint.
+// TODO: Standardize error handling responses, updating profile picture not working
 usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('image'), async (req: any, res: any) => {
   const userId: number = req.token.userId;
 

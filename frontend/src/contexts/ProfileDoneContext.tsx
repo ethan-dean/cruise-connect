@@ -12,13 +12,13 @@ interface ProfileDoneContextType {
 
 // Create ProfileDoneContext with default values
 export const ProfileDoneContext = createContext<ProfileDoneContextType>({
-  isProfileDone: false,
+  isProfileDone: null,
   checkIfProfileDone: () => {},
 });
 
 // Provider component for ProfileDoneContext
 export const ProfileDoneProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isProfileDone, setIsProfileDone] = useState<boolean | null>(false);
+  const [isProfileDone, setIsProfileDone] = useState<boolean | null>(null);
 
   // Function to check if the user has finished their profile  
   const checkIfProfileDone = async () => {

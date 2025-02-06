@@ -1,4 +1,3 @@
-// const mysql = require('mysql2');
 import mysql from 'mysql2';
 
 import { dbConnectionConfig } from './config.js';
@@ -10,24 +9,13 @@ const maxStringLength: number = 60;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Create a connection to the database.
-const connection = mysql.createConnection(dbConnectionConfig);
-
-function connectToDatabase() {
-  connection.connect((err: any) => {
-    if (err) {
-      console.error('Error connecting to DB:', err.stack);
-      return;
-    }
-    console.log('Connected to DB as id ' + connection.threadId);
-  });
-}
-connectToDatabase();
+const pool = mysql.createPool(dbConnectionConfig);
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // If table does not exist create it, fill it with initialDbData from folder.
 function setupDatabase() {
   // Log available databases (for debugging)
-  connection.query('SHOW DATABASES', (err: any, results: any) => {
+  pool.query('SHOW DATABASES', (err: any, results: any) => {
     if (err) {
       console.error('Error showing databases:', err.stack);
       return;
@@ -57,7 +45,7 @@ function setupDatabase() {
       twitter VARCHAR(${maxStringLength}) DEFAULT NULL,
       facebook VARCHAR(${maxStringLength}) DEFAULT NULL
     )`;
-  setupTable(connection, createUserDataTableQuery);
+  setupTable(pool, createUserDataTableQuery);
 
   // Create companyData table if it does not exist
   const createCompanyDataTableQuery = `
@@ -65,7 +53,7 @@ function setupDatabase() {
       companyId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       companyName VARCHAR(${maxStringLength}) NOT NULL
     )`;
-  setupTable(connection, createCompanyDataTableQuery);
+  setupTable(pool, createCompanyDataTableQuery);
 
   // Create shipData table if it does not exist
   const createShipDataTableQuery = `
@@ -75,7 +63,7 @@ function setupDatabase() {
       companyId INT UNSIGNED NOT NULL,
       FOREIGN KEY (companyId) REFERENCES companyData(companyId)
     )`;
-  setupTable(connection, createShipDataTableQuery);
+  setupTable(pool, createShipDataTableQuery);
 
   // Create cruiseData table if it does not exist
   const createCruiseDataTableQuery = `
@@ -85,7 +73,7 @@ function setupDatabase() {
       shipId INT UNSIGNED NOT NULL, 
       FOREIGN KEY (shipId) REFERENCES shipData(shipId)
     )`;
-  setupTable(connection, createCruiseDataTableQuery);
+  setupTable(pool, createCruiseDataTableQuery);
 
   // Create joinedCruises table if it does not exist
   const createJoinedCruisesTableQuery = `
@@ -96,7 +84,7 @@ function setupDatabase() {
       FOREIGN KEY (cruiseId) REFERENCES cruiseData(cruiseId)
     );
   `;
-  setupTable(connection, createJoinedCruisesTableQuery);
+  setupTable(pool, createJoinedCruisesTableQuery);
 }
 setupDatabase();
 
@@ -104,7 +92,7 @@ setupDatabase();
 // Utility functions
 function query(sql: string, params: any[]): Promise<any> {
   return new Promise((resolve, reject) => {
-    connection.query(sql, params, (err: any, results: any) => {
+    pool.query(sql, params, (err: any, results: any) => {
       if (err) reject(err);
       else resolve(results);
     });

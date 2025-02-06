@@ -2,7 +2,7 @@ import { useState, useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { differenceInYears, isFuture } from "date-fns";
+import { differenceInYears, isFuture, isValid } from "date-fns";
 
 import { ProfileDoneContext } from '../contexts/ProfileDoneContext';
 import fetchWithAuth from "../utils/fetchWithAuth";
@@ -40,6 +40,7 @@ export default function ProfileCreatePage() {
     const maxAge: number = 120;
 
     if (date) {
+      if (!isValid(date)) return "Birthday must be valid date";
       if (isFuture(date)) return "Birthday cannot be in the future";
 
       const age: number = differenceInYears(new Date(), date);
@@ -196,7 +197,7 @@ export default function ProfileCreatePage() {
               key={idx}
               className='profile-create-page__handle-container'
             >
-              {s}:
+              {s.charAt(0).toUpperCase() + s.slice(1)}:
               <input
                 type='text'
                 value={socialHandles[s] || ''}
@@ -218,8 +219,8 @@ export default function ProfileCreatePage() {
           <button
               className='profile-create-page__next-button' 
               onClick={() => { setShowHandles(false); setShowPictureSelector(true); } }
-              disabled={Object.entries(socialErrors).some(e => !!e) ||
-                        Object.entries(socialHandles).every(h => !h) ||
+              disabled={Object.values(socialErrors).some(e => !!e) ||
+                        Object.values(socialHandles).every(h => !h || h.length === 0) ||
                         Object.entries(socialHandles).length === 0}
           >
             Next
@@ -268,7 +269,7 @@ export default function ProfileCreatePage() {
           <p>{bio}</p>
           {Object.entries(socialHandles).map(([platform, handle], index) => { 
             return (
-              <p key={index}>{platform}: {handle}</p>
+              <p key={index}>{platform.charAt(0).toUpperCase() + platform.slice(1)}: {handle}</p>
             )
           })}
           <button

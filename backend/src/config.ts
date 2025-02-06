@@ -15,7 +15,7 @@ const dbConnectionConfig = {
   database: process.env.DB_NAME, 
   port: Number(process.env.DB_PORT),
   waitForConnections: true,
-  connectionLimit: 1,
+  connectionLimit: 10,
   queueLimit: 0,
 };
 const serverPort = 5000;
