@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { differenceInYears, parseISO } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
+import { AuthContext } from "../contexts/AuthContext";
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import getTitleCase from "../utils/getTitleCase";
@@ -38,7 +40,11 @@ export default function ProfileCreatePage() {
 
   const [showEditMode, setShowEditMode] = useState<boolean>(false);
   const [showImagePopup, setShowImagePopup] = useState<boolean>(false);
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
   const [imageCacheBuster, setImageCacheBuster] = useState<number>(Date.now());
+
+  const navigate = useNavigate();
+  const { logout } = useContext(AuthContext);
 
   const getUserProfileData = async () => {
     try {
@@ -155,9 +161,61 @@ export default function ProfileCreatePage() {
     }
   }
 
+  const logoutAccount = async () => {
+    try {
+      const response = await fetch(`${getBackendUrl()}/api/v1/users/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        logout();
+        navigate('/');
+      } else {
+        const data = await response.json();
+
+        console.log(data.message || 'Server connection error, try again later...');
+      }
+    } catch (error) {
+      console.log('Server connection error, try again later...');
+    }
+  }
+
+  const deleteAccount = async () => {
+    try {
+      const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/users/delete-user`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        logout();
+        navigate('/');
+      } else {
+        const data = await response.json();
+        console.log(data.message || 'Server connection error, try again later...');
+      }
+    } catch (error) {
+      console.log('Server connection error, try again later...');
+    }
+  };
+
   return !userData ? (null) : (
     <div className='profile-create-page__container'>
       <h1 className='profile-create-page__title'>Profile</h1>
+
+      <button className='profile-page__logout-button' onClick={logoutAccount}>Log out</button>
+      <button className='profile-page__delete-button' onClick={() => setShowConfirm(true)}>Delete Account</button>
+
+      {showConfirm && (
+        <div className="overlay">
+          <div className="confirm-popup">
+            <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+            <button className="confirm-popup__yes" onClick={deleteAccount}>Yes</button>
+            <button className="confirm-popup__no" onClick={() => setShowConfirm(false)}>No</button>
+          </div>
+        </div>
+      )}
 
       <p>Name: {getTitleCase(userData.firstName)} {getTitleCase(userData.lastName)}</p>
       <p>Email: {userData.email}</p>

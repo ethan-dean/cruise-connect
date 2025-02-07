@@ -9,7 +9,7 @@ const maxStringLength: number = 60;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Create a connection to the database.
-const pool = mysql.createPool(dbConnectionConfig);
+let pool = mysql.createPool(dbConnectionConfig);
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // If table does not exist create it, fill it with initialDbData from folder.
@@ -93,8 +93,23 @@ setupDatabase();
 function query(sql: string, params: any[]): Promise<any> {
   return new Promise((resolve, reject) => {
     pool.query(sql, params, (err: any, results: any) => {
-      if (err) reject(err);
-      else resolve(results);
+      if (err) {
+        // Handle specific errors
+        if (err.code === "PROTOCOL_CONNECTION_LOST" || err.code === "ECONNRESET" || err.code === "ETIMEDOUT") {
+          console.warn("Database connection lost. Reconnecting...");
+          pool.end(); // Close the old pool
+          pool = mysql.createPool(dbConnectionConfig); // Recreate pool
+
+          // Retry the query with the new pool
+          return pool.query(sql, params, (retryErr: any, retryResults: any) => {
+            if (retryErr) reject(retryErr);
+            else resolve(retryResults);
+          });
+        }
+
+        return reject(err); // Reject other errors
+      }
+      resolve(results);
     });
   });
 }
