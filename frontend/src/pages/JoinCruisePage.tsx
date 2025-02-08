@@ -5,7 +5,6 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
-import "../css/JoinCruisePage.css";
 
 
 // TODO: Add ability to go back in steps...

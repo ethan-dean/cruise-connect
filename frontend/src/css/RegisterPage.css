@@ -1,4 +1,6 @@
 .register-page {
+  margin-top: 20px;
+  height: fit-content;
   background-color: #ffffff;
   padding: 40px 30px;
   border-radius: 8px;

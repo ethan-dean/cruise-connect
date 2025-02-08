@@ -7,7 +7,6 @@ import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import getTitleCase from "../utils/getTitleCase";
 import filterProfanity from "../utils/filterProfanity";
-import "../css/JoinCruisePage.css";
 import missingImage from "../assets/missing-image.jpg"
 
 
@@ -201,11 +200,19 @@ export default function ProfileCreatePage() {
   };
 
   return !userData ? (null) : (
-    <div className='profile-create-page__container'>
-      <h1 className='profile-create-page__title'>Profile</h1>
+    <div className='mt-5'>
+      <input className='peer/accountMenu fixed top-[calc(8vh+24px)] right-2 w-6 h-6 z-[100] opacity-0' type='checkbox' />
+      <div className='invisible peer-checked/accountMenu:visible fixed top-[calc(8vh+24px)] right-2 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
+        <button className='w-45 mt-1 px-2 text-left text-lg font-semibold' onClick={logoutAccount}>Log out</button>
+        <button className='w-45 mt-1 pt-2 px-2 border-t-2 border-t-gray-300 text-left text-lg text-red-700 font-semibold' onClick={() => setShowConfirm(true)}>Delete Account</button>
+      </div>
+      <svg className='invisible peer-checked/accountMenu:visible fixed top-[calc(8vh+32px)] right-4' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
 
-      <button className='profile-page__logout-button' onClick={logoutAccount}>Log out</button>
-      <button className='profile-page__delete-button' onClick={() => setShowConfirm(true)}>Delete Account</button>
+      <div className='mx-2 flex justify-between items-center'>
+        <h1 className='text-2xl font-bold'>Account</h1>
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
+      </div>
+      <p className='mx-2'>Email: {userData.email}</p>
 
       {showConfirm && (
         <div className="overlay">
@@ -217,29 +224,43 @@ export default function ProfileCreatePage() {
         </div>
       )}
 
-      <p>Name: {getTitleCase(userData.firstName)} {getTitleCase(userData.lastName)}</p>
-      <p>Email: {userData.email}</p>
-      <p>Age: {differenceInYears(new Date(), parseISO(userData.birthDate))}</p>
-      <button onClick={() => setShowImagePopup(true)}>
-        <img src={`${getBackendUrl()}/profilePictureDb/${userData.imageId}.webp?cache=${imageCacheBuster}`} />
+      <input id='profileMenu' className='peer/profileMenu fixed top-[calc(8vh+100px)] right-2 w-6 h-6 z-[100] opacity-0' type='checkbox' />
+      <div className='invisible peer-checked/profileMenu:visible fixed top-[calc(8vh+100px)] right-2 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
+        <button className='w-45 px-2 text-left text-lg font-semibold' onClick={() => { 
+          setShowEditMode(true); 
+          const checkbox = document.getElementById('profileMenu') as HTMLInputElement;
+          if (checkbox) {
+            checkbox.checked = false;
+          }
+        }}>
+          Edit
+        </button>
+      </div>
+      <svg className='invisible peer-checked/profileMenu:visible fixed top-[calc(8vh+108px)] right-4' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+
+      <div className='mt-5 mx-2 flex justify-between items-center'>
+        <h1 className='text-2xl font-bold'>Profile</h1>
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
+      </div>
+
+      <button className='mt-1 mx-2 w-[calc(100vw-16px)]' onClick={() => setShowImagePopup(true)}>
+        <img className='rounded-md' src={`${getBackendUrl()}/profilePictureDb/${userData.imageId}.webp?cache=${imageCacheBuster}`} />
       </button>
+      <div className='mx-2 flex justify-between'>
+        <p className='text-2xl font-semibold'>{`${userData.firstName} ${userData.lastName}`}</p>
+        <p className='text-2xl font-semibold'>{differenceInYears(new Date(), parseISO(userData.birthDate))}</p>
+      </div>
       <div>
         {!showEditMode ? (
           <>
-            <button onClick={() => setShowEditMode(true)}>
-              <img src={missingImage}/>
-            </button>
-            <div>
-              <p>Bio:{bio}</p> 
-            </div>
-
-            <div>
+            <p className='mx-2 text-xl'>{bio}</p> 
+            <div className='mx-1 flex flex-wrap'>
               {socialSites.map((s, idx) => { 
                 if (!!socialHandles[s]) {
                   return (
-                    <div key={idx} className='profile-create-page__handle-container'>
-                      <p>{getTitleCase(s)}: {socialHandles[s] || ''} </p>
-                    </div>
+                    <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full' key={idx}>
+                      {getTitleCase(s)}: {socialHandles[s] || ''} 
+                    </p>
                   );
                 }
                 return null;
@@ -248,44 +269,49 @@ export default function ProfileCreatePage() {
           </>
         ) : (
           <>
-            <button onClick={() => setShowEditMode(false)}>
-              <img src={missingImage}/>
-            </button>
-            <div>
-              Bio: 
-              <textarea
-                value={bio}
-                onChange={(e) => {
-                  setBio(e.target.value);
-                  setBioError(validateBio(e.target.value));
-                }}
-              />
-              {bioError && <p className='profile-create-page__error'>{bioError}</p>}
-            </div>
-
-            <div>
-              {socialSites.map((s, idx) => (
-                <div key={idx} className='profile-create-page__handle-container'>
-                  {getTitleCase(s)}:
-                  <input
-                    type='text'
-                    value={socialHandles[s] || ''}
-                    onChange={(e) => { 
-                      handleSocialChange(s, e.target.value);
-                      setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
+            <div className='mx-2 flex items-start'>
+              <div className='w-[calc(80vw-16px)]'>
+                <div className='text-xl'>
+                  <textarea
+                    className='w-full border-2 border-blue-400 rounded-md hover:border-blue-700'
+                    value={bio}
+                    onChange={(e) => {
+                      setBio(e.target.value);
+                      setBioError(validateBio(e.target.value));
                     }}
                   />
-                  {socialErrors[s] && <p className='profile-create-page__error'>{socialErrors[s]}</p>}
+                  {bioError && <p className='profile-create-page__error'>{bioError}</p>}
                 </div>
-              ))}
+
+                <div className=''>
+                  {socialSites.map((s, idx) => (
+                    <div key={idx} className='mt-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
+                      {getTitleCase(s)}:
+                      <input
+                        className='border-2 border-blue-400 rounded-md hover:border-blue-700'
+                        type='text'
+                        value={socialHandles[s] || ''}
+                        onChange={(e) => { 
+                          handleSocialChange(s, e.target.value);
+                          setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
+                        }}
+                      />
+                      {socialErrors[s] && <p className='profile-create-page__error'>{socialErrors[s]}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className='w-[calc(20vw)]'>
+                <button
+                  className='mx-2 py-1 px-2 bg-blue-400 rounded-full text-lg text-white font-semibold' 
+                  onClick={() => { updateProfile(); setShowEditMode(false); } }
+                >
+                  Save
+                </button>
+              </div>
             </div>
 
-            <button
-              className='profile-create-page__save-button' 
-              onClick={() => { updateProfile(); setShowEditMode(false); } }
-            >
-              Save
-            </button>
           </>
         )}
       </div>

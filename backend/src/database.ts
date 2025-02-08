@@ -95,9 +95,11 @@ function query(sql: string, params: any[]): Promise<any> {
     pool.query(sql, params, (err: any, results: any) => {
       if (err) {
         // Handle specific errors
-        if (err.code === "PROTOCOL_CONNECTION_LOST" || err.code === "ECONNRESET" || err.code === "ETIMEDOUT") {
-          console.warn("Database connection lost. Reconnecting...");
-          pool.end(); // Close the old pool
+        if (["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(err.code)) {
+          // console.warn("Database connection lost. Reconnecting...");
+          // pool.end(); // Close the old pool
+          // pool = mysql.createPool(dbConnectionConfig); // Recreate pool
+          console.warn("Database connection lost. Creating a new pool...");
           pool = mysql.createPool(dbConnectionConfig); // Recreate pool
 
           // Retry the query with the new pool

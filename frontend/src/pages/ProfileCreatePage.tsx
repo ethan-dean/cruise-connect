@@ -8,7 +8,6 @@ import { ProfileDoneContext } from '../contexts/ProfileDoneContext';
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import filterProfanity from "../utils/filterProfanity";
-import "../css/JoinCruisePage.css";
 
 
 const socialSites = [ 'instagram', 'snapchat', 'tiktok', 'twitter', 'facebook' ];

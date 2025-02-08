@@ -4,7 +4,7 @@ import { differenceInYears } from 'date-fns';
 
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
-import "../css/CruiseFeedPage.css";
+import Loading from "../modules/loadingModule/Loading";
 
 
 type UserProfileType = {
@@ -21,7 +21,7 @@ type UserProfileType = {
 };
 
 export default function CruiseFeedPage() {
-  const [userProfilesData, setUserProfilesData] = useState<UserProfileType[]>([]);
+  const [userProfilesData, setUserProfilesData] = useState<UserProfileType[] | null>(null);
 
   const location = useLocation();
 
@@ -54,20 +54,46 @@ export default function CruiseFeedPage() {
     getJoinedCruisesData()
   }, []);
 
-  return (
-    <div className='cruise-feed-page__container'>
-      <p>Cruise Feed</p>
+  return !userProfilesData ? <Loading/> : (
+    <div className=''>
       {userProfilesData.map((u, index) => { return (
-        <div key={index}> 
-          <img src={`${getBackendUrl()}/profilePictureDb/${u.imageId}.webp`} />
-          <p>{`Name: ${u.firstName} ${u.lastName}`}</p>
-          <p>{`Bio: ${u.bio}`}</p>
-          <p>{differenceInYears(new Date(), new Date(u.birthDate))} years old</p>
-          <p>{(u.instagram) ? `Instagram: ${u.instagram}` : ''}</p>
-          <p>{(u.snapchat) ? `Snapchat: ${u.snapchat}` : ''}</p>
-          <p>{(u.tiktok) ? `Tiktok: ${u.tiktok}` : ''}</p>
-          <p>{(u.twitter) ? `Twitter: ${u.twitter}` : ''}</p>
-          <p>{(u.facebook) ? `Facebook: ${u.facebook}` : ''}</p>
+        <div className='mt-2' key={index}> 
+          <img className='mx-2 w-[calc(100vw-16px)] rounded-md' src={`${getBackendUrl()}/profilePictureDb/${u.imageId}.webp`} />
+          <div className='mx-2 flex justify-between'>
+            <p className='text-2xl font-semibold'>{`${u.firstName} ${u.lastName}`}</p>
+            <p className='text-2xl font-semibold'>{differenceInYears(new Date(), new Date(u.birthDate))}</p>
+          </div>
+          <p className='mx-2 text-xl '>{`${u.bio}`}</p>
+          <div className='mx-1 flex flex-wrap'>
+            {u.instagram && (
+              <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
+                {`Instagram: @${u.instagram}`}
+              </p>
+            )}
+            {u.snapchat && (
+              <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
+                {`Snapchat: @${u.snapchat}`}
+              </p>
+            )}
+            {u.tiktok && (
+              <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
+                {`Tiktok: @${u.tiktok}`}
+              </p>
+            )}
+            {u.twitter && (
+              <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
+                {`Twitter: @${u.twitter}`}
+              </p>
+            )}
+            {u.facebook && (
+              <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
+                {`Facebook: @${u.facebook}`}
+              </p>
+            )}
+          </div>
+          {index < userProfilesData.length-1 && (
+            <hr className='w-[calc(100vw-16px)] mx-auto mt-2 bg-gray-100' />
+          )}
         </div>
         )}
       )}
