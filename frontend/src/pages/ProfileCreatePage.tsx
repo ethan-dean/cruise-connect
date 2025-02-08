@@ -1,13 +1,15 @@
-import { useState, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { differenceInYears, isFuture, isValid } from "date-fns";
 
 import { ProfileDoneContext } from '../contexts/ProfileDoneContext';
+import getTitleCase from "../utils/getTitleCase";
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import filterProfanity from "../utils/filterProfanity";
+import Loading from "../modules/loadingModule/Loading";
 
 
 const socialSites = [ 'instagram', 'snapchat', 'tiktok', 'twitter', 'facebook' ];
@@ -17,6 +19,9 @@ export default function ProfileCreatePage() {
   const [bio, setBio] = useState<string>('');
   const [socialHandles, setSocialHandles] = useState<Record<string, string>>({});
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
 
   const [calendarError, setCalendarError] = useState<string | null>(null);
   const [bioError, setBioError] = useState<string | null>(null);
@@ -30,6 +35,11 @@ export default function ProfileCreatePage() {
   const [showSummary, setShowSummary] = useState(false);
 
   const { isProfileDone, checkIfProfileDone } = useContext(ProfileDoneContext);
+
+  useEffect(() => {
+    getUserProfileData();
+  }, []);
+
   if (isProfileDone) {
     return <Navigate to='/dashboard' />;
   }
@@ -67,7 +77,7 @@ export default function ProfileCreatePage() {
 
     if (handle) {
       if (handle.length > maxLength) return `Max length ${maxLength} characters`;
-      if (filterProfanity(handle) !== handle) return "No accounts with profane usernames...";
+      if (filterProfanity(handle) !== handle) return "No profanity in usernames...";
     }
 
     return "";
@@ -107,6 +117,27 @@ export default function ProfileCreatePage() {
     }
   };
 
+  const getUserProfileData = async () => {
+    try {
+      const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/users/get-user-profile`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Most values in data will be null since we are filling them out now,
+        // but should have first and last from register
+        setFirstName(data.firstName);
+        setLastName(data.lastName);
+      } else {
+        const data = await response.json();
+        console.log(data.message || 'Server connection error, try again later...');
+      }
+    } catch (error) {
+      console.log('Server connection error, try again later... ');
+    };
+  };
+
   const updateProfile = async () => {
     try {
       const response = await fetchWithAuth(`${getBackendUrl()}/api/v1/users/update-user-profile`, {
@@ -136,155 +167,213 @@ export default function ProfileCreatePage() {
   }
 
   return (
-    <div className='profile-create-page__container'>
-      <h1 className='profile-create-page__title'>Create Profile</h1>
+    <div className='mx-2'>
+      <h1 className='mt-5 text-center text-2xl font-bold'>Let's Create your Profile!</h1>
 
       {showCalendar && (
-        <div>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              value={selectedDate}
-              onChange={(date) => {
-                setSelectedDate(date);
-                setCalendarError(validateCalendar(date));
-              }}
-            />
-          </LocalizationProvider>
-          {calendarError && <p className='profile-create-page__error'>{calendarError}</p>}
+        <div className='mt-5 flex flex-col items-center justify-center'>
+          <div className='h-[20vh]'>
+            <h2 className='mb-1 text-lg font-semibold'>Date of Birth:</h2>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  sx={{ 
+                    width: '240px',
+                    height: '80px',    
+                    '& .MuiInputBase-root': {
+                      height: '100%', // Ensure the input field container fills the height
+                    },
+                    '& .MuiInputBase-input': {
+                      fontSize: '18px', // Increase font size
+                    },
+                    '& .MuiOutlinedInput-root': {
+                      height: '100%', // Ensure the outlined variant respects the height
+                      '& fieldset': {
+                        borderColor: 'var(--color-gray-400)', // Default outline color to match rest
+                      },
+                    },
+                  }}
+                  value={selectedDate}
+                  onChange={(date) => {
+                    setSelectedDate(date);
+                    setCalendarError(validateCalendar(date));
+                  }}
+                />
+              </LocalizationProvider>
+            {calendarError && <p className='mt-1 text-sm text-red-700'>{calendarError}</p>}
+          </div>
 
-          <button
-            className='profile-create-page__next-button' 
-            onClick={() => { setShowCalendar(false); setShowBio(true); } }
-            disabled={!!calendarError || !selectedDate}
-          >
-            Next
-          </button>
+          <div className='mt-4 flex justify-around gap-10'>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              disabled={true}
+            >
+              Previous
+            </button>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400'
+              onClick={() => { setShowCalendar(false); setShowBio(true); } }
+              disabled={!!calendarError || !selectedDate}
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
       {showBio && (
-        <div>
-          <textarea
-            value={bio}
-            onChange={(e) => {
-              setBio(e.target.value);
-              setBioError(validateBio(e.target.value));
-            }}
-          />
-          {bioError && <p className='profile-create-page__error'>{bioError}</p>}
+        <div className='mt-5 flex flex-col items-center justify-center'>
+          <div className='w-60 h-[20vh]'>
+            <h2 className='text-lg font-semibold'>Bio:</h2>
+            <textarea
+              className='mt-1 w-60 h-20 p-1 border-1 border-gray-400 rounded-sm'
+              value={bio}
+              onChange={(e) => {
+                setBio(e.target.value);
+                setBioError(validateBio(e.target.value));
+              }}
+              placeholder='Something about yourself...'
+            />
+            {bioError && <p className='mt-1 text-sm text-red-700'>{bioError}</p>}
+          </div>
 
-          <button
-            className='profile-create-page__previous-button' 
-            onClick={() => { setShowBio(false); setShowCalendar(true); } }
-          >
-            Previous
-          </button>
-          <button
-            className='profile-create-page__next-button' 
-            onClick={() => { setShowBio(false); setShowHandles(true); } }
-            disabled={!!bioError || !bio}
-          >
-            Next
-          </button>
+          <div className='mt-4 flex justify-around gap-10'>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+              onClick={() => { setShowBio(false); setShowCalendar(true); } }
+            >
+              Previous
+            </button>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              onClick={() => { setShowBio(false); setShowHandles(true); } }
+              disabled={!!bioError || !bio}
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
       {showHandles && (
-        <div>
-          {socialSites.map((s, idx) => (
-            <div
-              key={idx}
-              className='profile-create-page__handle-container'
-            >
-              {s.charAt(0).toUpperCase() + s.slice(1)}:
-              <input
-                type='text'
-                value={socialHandles[s] || ''}
-                onChange={(e) => { 
-                  handleSocialChange(s, e.target.value);
-                  setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
-                }}
-              />
-              {socialErrors[s] && <p className='profile-create-page__error'>{socialErrors[s]}</p>}
-            </div>
-          ))}
+        <div className='mt-5 flex flex-col items-center justify-center'>
+          <div className='w-80'>
+            <h2 className='text-lg font-semibold'>Add Social Handles:</h2>
+            {socialSites.map((s, idx) => (
+              <div
+                key={idx}
+                className='mt-1 flex'
+              >
+                <p className='w-25 text-lg'>{getTitleCase(s)}:</p>
+                <p className='w-5 text-end'>@</p>
+                <div className='flex flex-col justify-start'>
+                  <input
+                    className='w-50 h-[3vh] p-1 border-1 border-gray-400 rounded-sm'
+                    type='text'
+                    value={socialHandles[s] || ''}
+                    onChange={(e) => { 
+                      handleSocialChange(s, e.target.value);
+                      setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
+                    }}
+                  />
+                  {socialErrors[s] && <p className='mt-1 text-sm text-red-700'>{socialErrors[s]}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
 
-          <button
-            className='profile-create-page__previous-button' 
-            onClick={() => { setShowHandles(false); setShowBio(true); } }
-          >
-            Previous
-          </button>
-          <button
-              className='profile-create-page__next-button' 
+          <div className='mt-4 flex justify-around gap-10'>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+              onClick={() => { setShowHandles(false); setShowBio(true); } }
+            >
+              Previous
+            </button>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
               onClick={() => { setShowHandles(false); setShowPictureSelector(true); } }
               disabled={Object.values(socialErrors).some(e => !!e) ||
                         Object.values(socialHandles).every(h => !h || h.length === 0) ||
                         Object.entries(socialHandles).length === 0}
-          >
-            Next
-          </button>
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
       {showPictureSelector && (
-        <div>
-          <h2>Upload Profile Picture</h2>
-          <input type="file" accept="image/*" onChange={handleFileChange} />
-          {imageError && <p className='profile-create-page__error'>{imageError}</p>}
+        <div className='mt-5'>
+          <div className='h-[15vh]'>
+            <h2 className='text-xl font-semibold w-60'>Upload Profile Picture:</h2>
+            <label className='relative top-[3vh] w-40 py-1.5 px-2.5 bg-blue-400 rounded-full text-lg text-white font-semibold' htmlFor="pictureUpload">
+              Choose Picture
+            </label>
+            <input className='hidden' id='pictureUpload' type="file" accept="image/*" onChange={e => { setImageError(null); handleFileChange(e); } } />
+            {imageError && <p className='profile-create-page__error'>{imageError}</p>}
+          </div>
 
           {previewImage && (
             <>
-              <h3>Processed Image Preview</h3>
-              <img src={previewImage} alt="Processed Preview" width={256} />
+              <h3 className='text-xl font-semibold'>Profile Picture Preview</h3>
+              <img className='w-[calc(100vw-16px)] rounded-md' src={previewImage} alt="Image Preview" />
             </>
           )}
 
-          <button
-            className='profile-create-page__previous-button' 
-            onClick={() => { setShowPictureSelector(false); setShowHandles(true); } }
-          >
-            Previous
-          </button>
-          <button
-            className='profile-create-page__next-button' 
-            onClick={() => { setShowPictureSelector(false); setShowSummary(true); } }
-            disabled={!!imageError || !previewImage}
-          >
-            Next
-          </button>
+          <div className='mt-4 mx-auto w-60 flex justify-around gap-10'>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+              onClick={() => { setShowPictureSelector(false); setShowHandles(true); } }
+            >
+              Previous
+            </button>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              onClick={() => { setShowPictureSelector(false); setShowSummary(true); } }
+              disabled={!!imageError || !previewImage}
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
-      {showSummary && (
+      {showSummary && (!(firstName && lastName) ? (<Loading />) : (
         <div>
-          {previewImage && (
-            <>
-              <p>Processed Image Preview</p>
-              <img src={previewImage} alt="Processed Preview" width={256} />
-            </>
-          )}
-          <p>{selectedDate!.toDateString()}</p>
-          <p>{bio}</p>
-          {Object.entries(socialHandles).map(([platform, handle], index) => { 
-            return (
-              <p key={index}>{platform.charAt(0).toUpperCase() + platform.slice(1)}: {handle}</p>
-            )
-          })}
-          <button
-            className='profile-create-page__previous-button' 
-            onClick={() => { setShowSummary(false); setShowPictureSelector(true); } }
-          >
-            Previous
-          </button>
-          <button
-            className='profile-create-page__save-button' 
-            onClick={() => updateProfile() }
-          >
-            Save
-          </button>
+          {previewImage && <img className='w-[calc(100vw-16px)] rounded-md' src={previewImage} alt="Image Preview" /> }
+          <div className='flex justify-between'>
+            <p className='text-2xl font-semibold'>{`${firstName} ${lastName}`}</p>
+            <p className='text-2xl font-semibold'>{differenceInYears(new Date(), selectedDate!)}</p>
+          </div>
+          <p className='text-xl'>{bio}</p> 
+          <div className='-mx-1 flex flex-wrap'>
+            {socialSites.map((s, idx) => { 
+              if (!!socialHandles[s]) {
+                return (
+                  <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full' key={idx}>
+                    {getTitleCase(s)}: @{socialHandles[s] || ''} 
+                  </p>
+                );
+              }
+              return null;
+            })}
+          </div>
+
+          <div className='mt-4 flex justify-around gap-10'>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+              onClick={() => { setShowSummary(false); setShowPictureSelector(true); } }
+            >
+              Previous
+            </button>
+            <button
+              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              onClick={() => updateProfile() }
+            >
+              Save
+            </button>
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }

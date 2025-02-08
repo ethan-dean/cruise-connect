@@ -10,11 +10,11 @@ export default function HeaderLayout() {
 
   return (
     <div className='w-screen h-screen'>
-      <header className='fixed w-screen flex justify-between pt-5 h-[8%] bg-white shadow-md'>
-        <div className = 'flex pl-5'>
+      <header className='fixed top-0 w-screen z-[45] flex justify-between items-center h-[8%] bg-white shadow-md'>
+        <div className = 'flex pl-4'>
           <Link className='text-lg font-semibold' to='/'>Cruise Connect</Link>
         </div>
-        <div className='flex justify-around pr-5'>
+        <div className='flex justify-around pr-4'>
           { isAuthenticated ?
               isProfileDone ? (<>
                 <Link className='text-lg font-semibold pr-5' to='/dashboard'>Dashboard</Link>
@@ -32,9 +32,8 @@ export default function HeaderLayout() {
           }
         </div>
       </header>
-      <div className='spacer h-[8%]'/>
 
-      <main className='m-0 p-0 flex justify-center h-[92%]'>
+      <main className='m-0 mt-[8vh] p-0 flex justify-center h-[92%]'>
         <Outlet />
       </main>
     </div>

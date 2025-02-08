@@ -7,7 +7,7 @@ import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import getTitleCase from "../utils/getTitleCase";
 import filterProfanity from "../utils/filterProfanity";
-import missingImage from "../assets/missing-image.jpg"
+import Loading from "../modules/loadingModule/Loading";
 
 
 const socialSites = [ 'instagram', 'snapchat', 'tiktok', 'twitter', 'facebook' ];
@@ -31,7 +31,7 @@ export default function ProfileCreatePage() {
 
   const [bio, setBio] = useState<string>('');
   const [socialHandles, setSocialHandles] = useState<Record<string, string>>({});
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  { /* const [previewImage, setPreviewImage] = useState<string | null>(null); */ }
 
   const [bioError, setBioError] = useState<string | null>(null);
   const [socialErrors, setSocialErrors] = useState<Record<string, string>>({});
@@ -125,9 +125,10 @@ export default function ProfileCreatePage() {
       }
 
       // Get the processed image as a blob
-      const blob = await response.blob();
-      const objectURL = URL.createObjectURL(blob);
-      setPreviewImage(objectURL);
+      // const blob = await response.blob();
+      // const objectURL = URL.createObjectURL(blob);
+      // setPreviewImage(objectURL);
+      
       // Don't need to get the processed image as a blob just 
       // cache bust with the url for the profile picture 
       setImageCacheBuster(Date.now());
@@ -199,14 +200,14 @@ export default function ProfileCreatePage() {
     }
   };
 
-  return !userData ? (null) : (
+  return !userData ? (<Loading />) : (
     <div className='mt-5'>
-      <input className='peer/accountMenu fixed top-[calc(8vh+24px)] right-2 w-6 h-6 z-[100] opacity-0' type='checkbox' />
-      <div className='invisible peer-checked/accountMenu:visible fixed top-[calc(8vh+24px)] right-2 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
+      <input className='peer/accountMenu fixed top-[calc(8vh+24px)] right-2 w-6 h-6 z-40 opacity-0' type='checkbox' />
+      <div className='invisible peer-checked/accountMenu:visible absolute top-[calc(8vh+24px)] right-2 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
         <button className='w-45 mt-1 px-2 text-left text-lg font-semibold' onClick={logoutAccount}>Log out</button>
         <button className='w-45 mt-1 pt-2 px-2 border-t-2 border-t-gray-300 text-left text-lg text-red-700 font-semibold' onClick={() => setShowConfirm(true)}>Delete Account</button>
       </div>
-      <svg className='invisible peer-checked/accountMenu:visible fixed top-[calc(8vh+32px)] right-4' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+      <svg className='invisible peer-checked/accountMenu:visible absolute top-[calc(8vh+32px)] right-4' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
 
       <div className='mx-2 flex justify-between items-center'>
         <h1 className='text-2xl font-bold'>Account</h1>
@@ -215,38 +216,59 @@ export default function ProfileCreatePage() {
       <p className='mx-2'>Email: {userData.email}</p>
 
       {showConfirm && (
-        <div className="overlay">
-          <div className="confirm-popup">
-            <p>Are you sure you want to delete your account? This action cannot be undone.</p>
-            <button className="confirm-popup__yes" onClick={deleteAccount}>Yes</button>
-            <button className="confirm-popup__no" onClick={() => setShowConfirm(false)}>No</button>
+        <div className='absolute top-0 right-0 w-screen h-screen flex justify-center items-center z-50 bg-black/50'>
+          <div className='w-[80vw] bg-white p-5 rounded-md text-center shadow-md'>
+            <p className='mb-5 text-xl'>Are you sure you want to delete your account?<br/><br/>This action cannot be undone.</p>
+            <button className='m-1 px-5 py-2 bg-red-700 text-white font-semibold text-xl rounded-md cursor-pointer' onClick={deleteAccount}>Yes</button>
+            <button className='m-1 px-5 py-2 bg-gray-500 text-white font-semibold text-xl rounded-md cursor-pointer' onClick={() => setShowConfirm(false)}>No</button>
           </div>
         </div>
       )}
 
-      <input id='profileMenu' className='peer/profileMenu fixed top-[calc(8vh+100px)] right-2 w-6 h-6 z-[100] opacity-0' type='checkbox' />
-      <div className='invisible peer-checked/profileMenu:visible fixed top-[calc(8vh+100px)] right-2 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
-        <button className='w-45 px-2 text-left text-lg font-semibold' onClick={() => { 
-          setShowEditMode(true); 
-          const checkbox = document.getElementById('profileMenu') as HTMLInputElement;
-          if (checkbox) {
-            checkbox.checked = false;
-          }
-        }}>
-          Edit
-        </button>
-      </div>
-      <svg className='invisible peer-checked/profileMenu:visible fixed top-[calc(8vh+108px)] right-4' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
-
       <div className='mt-5 mx-2 flex justify-between items-center'>
         <h1 className='text-2xl font-bold'>Profile</h1>
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
+        {!showEditMode ? (
+          <button className='' onClick={() => setShowEditMode(true)}> 
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+          </button>
+        ) : (
+          <span/>
+        )}
       </div>
 
-      <button className='mt-1 mx-2 w-[calc(100vw-16px)]' onClick={() => setShowImagePopup(true)}>
+      <button className='mt-1 mx-2 h-[calc(100vw-16px)] w-[calc(100vw-16px)]' onClick={() => setShowImagePopup(true)}>
         <img className='rounded-md' src={`${getBackendUrl()}/profilePictureDb/${userData.imageId}.webp?cache=${imageCacheBuster}`} />
+        <div className='relative -top-[calc(50vw-8px)] h-[calc(50vw-8px)] flex justify-center items-center rounded-t-[calc(50vw-8px)] rounded-b-md bg-black/60 text-white text-3xl font-semibold'>
+          <p className='w-[calc(70vw-8px)]'>
+            Click to change picture.
+          </p>
+        </div>
       </button>
-      <div className='mx-2 flex justify-between'>
+
+      {showImagePopup && (
+        <div className='absolute top-0 right-0 w-screen h-screen flex justify-center items-center z-50 bg-black/50'>
+          <div className='bg-white w-[90vw] h-[15vh] p-5 rounded-lg'>
+            <div className='flex justify-between'>
+              <h2 className='text-xl font-semibold'>Update Profile Picture</h2>
+              <button onClick={() => { setShowImagePopup(false); setImageError(null); } } >
+                <svg className='' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+              </button>
+            </div>
+            <label className='relative top-[3vh] w-40 py-1.5 px-2.5 bg-blue-400 rounded-full text-lg text-white font-semibold' htmlFor="pictureUpload">Choose New Picture</label>
+            <input className='hidden' id='pictureUpload' type="file" accept="image/*" onChange={e => { setImageError(null); handleFileChange(e); setShowImagePopup(false); } } />
+            {imageError && <p className='profile-create-page__error'>{imageError}</p>}
+
+            {
+            // TODO: Implement previews before saving profile picture change
+            // <h3>Processed Image Preview</h3>
+            // {previewImage && ( <img src={previewImage} alt="Processed Preview" /> )}
+            // {!previewImage && ( <img src={missingImage} alt="Processed Preview" /> )}
+            }
+          </div>
+        </div>
+      )}
+
+      <div className='-mt-20 mx-2 flex justify-between'>
         <p className='text-2xl font-semibold'>{`${userData.firstName} ${userData.lastName}`}</p>
         <p className='text-2xl font-semibold'>{differenceInYears(new Date(), parseISO(userData.birthDate))}</p>
       </div>
@@ -259,7 +281,7 @@ export default function ProfileCreatePage() {
                 if (!!socialHandles[s]) {
                   return (
                     <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full' key={idx}>
-                      {getTitleCase(s)}: {socialHandles[s] || ''} 
+                      {getTitleCase(s)}: @{socialHandles[s] || ''} 
                     </p>
                   );
                 }
@@ -286,7 +308,7 @@ export default function ProfileCreatePage() {
                 <div className=''>
                   {socialSites.map((s, idx) => (
                     <div key={idx} className='mt-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
-                      {getTitleCase(s)}:
+                      {getTitleCase(s)}: @
                       <input
                         className='border-2 border-blue-400 rounded-md hover:border-blue-700'
                         type='text'
@@ -309,27 +331,13 @@ export default function ProfileCreatePage() {
                 >
                   Save
                 </button>
+                { /* TODO: Add a cancel button when editing here */ }
               </div>
             </div>
-
+            <div className='h-10'/>
           </>
         )}
       </div>
-
-      {showImagePopup && (
-        <div>
-          <button onClick={() => setShowImagePopup(false)}>
-            X
-          </button>
-          <h2>Upload Profile Picture</h2>
-          <input type="file" accept="image/*" onChange={handleFileChange} />
-          {imageError && <p className='profile-create-page__error'>{imageError}</p>}
-
-          <h3>Processed Image Preview</h3>
-          {previewImage && ( <img src={previewImage} alt="Processed Preview" /> )}
-          {!previewImage && ( <img src={missingImage} alt="Processed Preview" /> )}
-        </div>
-      )}
     </div>
   );
 }
