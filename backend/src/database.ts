@@ -46,9 +46,7 @@ async function setupDatabase() {
       twitter VARCHAR(${maxStringLength}) DEFAULT NULL,
       facebook VARCHAR(${maxStringLength}) DEFAULT NULL
     )`;
-  setupTable(connection, createUserDataTableQuery);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  console.log('Finished userData setup.')
+  await setupTable(connection, createUserDataTableQuery);
 
   // Create companyData table if it does not exist
   const createCompanyDataTableQuery = `
@@ -56,9 +54,7 @@ async function setupDatabase() {
       companyId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       companyName VARCHAR(${maxStringLength}) NOT NULL
     )`;
-  setupTable(connection, createCompanyDataTableQuery);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  console.log('Finished companyData setup.')
+  await setupTable(connection, createCompanyDataTableQuery);
 
   // Create shipData table if it does not exist
   const createShipDataTableQuery = `
@@ -68,9 +64,7 @@ async function setupDatabase() {
       companyId INT UNSIGNED NOT NULL,
       FOREIGN KEY (companyId) REFERENCES companyData(companyId)
     )`;
-  setupTable(connection, createShipDataTableQuery);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  console.log('Finished shipData setup.')
+  await setupTable(connection, createShipDataTableQuery);
 
   // Create cruiseData table if it does not exist
   const createCruiseDataTableQuery = `
@@ -80,9 +74,7 @@ async function setupDatabase() {
       shipId INT UNSIGNED NOT NULL, 
       FOREIGN KEY (shipId) REFERENCES shipData(shipId)
     )`;
-  setupTable(connection, createCruiseDataTableQuery);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  console.log('Finished cruiseData setup.')
+  await setupTable(connection, createCruiseDataTableQuery);
 
   // Create joinedCruises table if it does not exist
   const createJoinedCruisesTableQuery = `
@@ -92,100 +84,39 @@ async function setupDatabase() {
       FOREIGN KEY (userId) REFERENCES userData(userId),
       FOREIGN KEY (cruiseId) REFERENCES cruiseData(cruiseId)
     )`;
-  setupTable(connection, createJoinedCruisesTableQuery);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  console.log('Finished joinedCruises setup.')
+  await setupTable(connection, createJoinedCruisesTableQuery);
 
   // Release the connection back to the pool
   connection.release();
-  console.log('Temporary DB connection released!')
 }
 setupDatabase();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Utility functions
-function query(sql: string, params: any[]): Promise<any> {
-  return new Promise(async (resolve, reject) => {
-    // try {
-    //     const [results] = await pool.query(sql, params);
-    //     if (results === null) console.log('queryResults === null');
-    //     console.log('query: queryResults=' + results + '<end>');
-    //     return [results, null];
-    // } catch (err: any) {
-    //     console.log('query: caught an error in query')
-    //     if (["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(err.code)) {
-    //         console.warn("Database connection lost. Creating a new pool...");
-    //         // pool.end(); // Close the old pool
-    //         pool = mysql.createPool(dbConnectionConfig); // Recreate pool
-    //
-    //         // Retry the query with the new pool
-    //         try {
-    //           const [retryResults] = await pool.query(sql, params);
-    //           console.log('query: retryResults=' + retryResults + '<end>');
-    //           return [retryResults, null];
-    //         } catch (retryErr: any) {
-    //           console.log('query: caught an error in query')
-    //           return [null, retryErr];
-    //         }
-    //     }
-    //     // Return other errors
-    //     return [null, err];
-    // }
+async function query(sql: string, params: any[]): Promise<any> {
+  try {
+    const [results] = await pool.query(sql, params);
+    return results;
+  } catch (err: any) {
+      // Handle disconnect specific errors
+      if (["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(err.code)) {
+        // console.warn("Database connection lost. Reconnecting...");
+        // pool.end(); // Close the old pool
+        // pool = mysql.createPool(dbConnectionConfig); // Recreate pool
+        console.warn("Database connection lost. Creating a new pool...");
+        pool = mysql.createPool(dbConnectionConfig); // Recreate pool
 
-    try {
-      const [results] = await pool.query(sql, params);
-      resolve(results);
-    } catch (err: any) {
-        // Handle specific errors
-        if (["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(err.code)) {
-          // console.warn("Database connection lost. Reconnecting...");
-          // pool.end(); // Close the old pool
-          // pool = mysql.createPool(dbConnectionConfig); // Recreate pool
-          console.warn("Database connection lost. Creating a new pool...");
-          pool = mysql.createPool(dbConnectionConfig); // Recreate pool
-
-          // Retry the query with the new pool
-          try {
-            const [retryResults] = await pool.query(sql, params);
-            resolve(retryResults);
-          } catch (retryErr: any) {
-            reject(retryErr);
-          }
+        // Retry the query with the new pool
+        try {
+          const [retryResults] = await pool.query(sql, params);
+          return retryResults;
+        } catch (retryErr: any) {
+          throw retryErr;
         }
-      return reject(err); // Reject other errors
-    }
-
-  });
+      }
+    throw err; // Throw other errors
+  }
 }
-
-// // TODO: Remove debug prints
-// async function query(sql: string, params: any[]): Promise<any> {
-//     try {
-//         const [results] = await pool.query(sql, params);
-//         if (results === null) console.log('queryResults === null');
-//         console.log('query: queryResults=' + results + '<end>');
-//         return [results, null];
-//     } catch (err: any) {
-//         console.log('query: caught an error in query')
-//         if (["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(err.code)) {
-//             console.warn("Database connection lost. Creating a new pool...");
-//             // pool.end(); // Close the old pool
-//             pool = mysql.createPool(dbConnectionConfig); // Recreate pool
-//
-//             // Retry the query with the new pool
-//             try {
-//               const [retryResults] = await pool.query(sql, params);
-//               console.log('query: retryResults=' + retryResults + '<end>');
-//               return [retryResults, null];
-//             } catch (retryErr: any) {
-//               console.log('query: caught an error in query')
-//               return [null, retryErr];
-//             }
-//         }
-//         // Return other errors
-//         return [null, err];
-//     }
-// }
 
 function validateStringFieldLengths(stringFields: Object) {
   for (const [fieldName, value] of Object.entries(stringFields)) {
@@ -299,6 +230,7 @@ async function getUserFromId(userId: number): Promise<[string|null, any]> {
   // Query database.
   try {
     const results = await query(getUserQuery, [userId]);
+    console.log(results)
     // There can only be one user with each userId, just extra sanity check
     if (results.length > 1) return ['DATABASE_QUERY_ERROR', null];
     return [ null, results?.[0] ];
