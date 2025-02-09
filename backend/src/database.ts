@@ -1,4 +1,4 @@
-import mysql from 'mysql2';
+import mysql from 'mysql2/promise';
 
 import { dbConnectionConfig } from './config.js';
 import { setupTable } from './utils/setupTable.js';
@@ -13,15 +13,16 @@ let pool = mysql.createPool(dbConnectionConfig);
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // If table does not exist create it, fill it with initialDbData from folder.
-function setupDatabase() {
-  // Log available databases (for debugging)
-  pool.query('SHOW DATABASES', (err: any, results: any) => {
-    if (err) {
-      console.error('Error showing databases:', err.stack);
-      return;
-    }
+async function setupDatabase() {
+  const connection = await pool.getConnection();
+
+  try {
+    // Log available databases (for debugging)
+    const [results] = await connection.query('SHOW DATABASES');
     console.log('Available Databases:', results);
-  });
+  } catch (err: any) {
+    console.error('Error showing databases:', err.stack);
+  }
 
   // Create userData table if it does not exist
   const createUserDataTableQuery = `
@@ -45,7 +46,9 @@ function setupDatabase() {
       twitter VARCHAR(${maxStringLength}) DEFAULT NULL,
       facebook VARCHAR(${maxStringLength}) DEFAULT NULL
     )`;
-  setupTable(pool, createUserDataTableQuery);
+  setupTable(connection, createUserDataTableQuery);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log('Finished userData setup.')
 
   // Create companyData table if it does not exist
   const createCompanyDataTableQuery = `
@@ -53,7 +56,9 @@ function setupDatabase() {
       companyId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
       companyName VARCHAR(${maxStringLength}) NOT NULL
     )`;
-  setupTable(pool, createCompanyDataTableQuery);
+  setupTable(connection, createCompanyDataTableQuery);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log('Finished companyData setup.')
 
   // Create shipData table if it does not exist
   const createShipDataTableQuery = `
@@ -63,7 +68,9 @@ function setupDatabase() {
       companyId INT UNSIGNED NOT NULL,
       FOREIGN KEY (companyId) REFERENCES companyData(companyId)
     )`;
-  setupTable(pool, createShipDataTableQuery);
+  setupTable(connection, createShipDataTableQuery);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log('Finished shipData setup.')
 
   // Create cruiseData table if it does not exist
   const createCruiseDataTableQuery = `
@@ -73,7 +80,9 @@ function setupDatabase() {
       shipId INT UNSIGNED NOT NULL, 
       FOREIGN KEY (shipId) REFERENCES shipData(shipId)
     )`;
-  setupTable(pool, createCruiseDataTableQuery);
+  setupTable(connection, createCruiseDataTableQuery);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log('Finished cruiseData setup.')
 
   // Create joinedCruises table if it does not exist
   const createJoinedCruisesTableQuery = `
@@ -82,18 +91,51 @@ function setupDatabase() {
       cruiseId INT UNSIGNED NOT NULL,
       FOREIGN KEY (userId) REFERENCES userData(userId),
       FOREIGN KEY (cruiseId) REFERENCES cruiseData(cruiseId)
-    );
-  `;
-  setupTable(pool, createJoinedCruisesTableQuery);
+    )`;
+  setupTable(connection, createJoinedCruisesTableQuery);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log('Finished joinedCruises setup.')
+
+  // Release the connection back to the pool
+  connection.release();
+  console.log('Temporary DB connection released!')
 }
 setupDatabase();
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Utility functions
 function query(sql: string, params: any[]): Promise<any> {
-  return new Promise((resolve, reject) => {
-    pool.query(sql, params, (err: any, results: any) => {
-      if (err) {
+  return new Promise(async (resolve, reject) => {
+    // try {
+    //     const [results] = await pool.query(sql, params);
+    //     if (results === null) console.log('queryResults === null');
+    //     console.log('query: queryResults=' + results + '<end>');
+    //     return [results, null];
+    // } catch (err: any) {
+    //     console.log('query: caught an error in query')
+    //     if (["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(err.code)) {
+    //         console.warn("Database connection lost. Creating a new pool...");
+    //         // pool.end(); // Close the old pool
+    //         pool = mysql.createPool(dbConnectionConfig); // Recreate pool
+    //
+    //         // Retry the query with the new pool
+    //         try {
+    //           const [retryResults] = await pool.query(sql, params);
+    //           console.log('query: retryResults=' + retryResults + '<end>');
+    //           return [retryResults, null];
+    //         } catch (retryErr: any) {
+    //           console.log('query: caught an error in query')
+    //           return [null, retryErr];
+    //         }
+    //     }
+    //     // Return other errors
+    //     return [null, err];
+    // }
+
+    try {
+      const [results] = await pool.query(sql, params);
+      resolve(results);
+    } catch (err: any) {
         // Handle specific errors
         if (["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(err.code)) {
           // console.warn("Database connection lost. Reconnecting...");
@@ -103,18 +145,47 @@ function query(sql: string, params: any[]): Promise<any> {
           pool = mysql.createPool(dbConnectionConfig); // Recreate pool
 
           // Retry the query with the new pool
-          return pool.query(sql, params, (retryErr: any, retryResults: any) => {
-            if (retryErr) reject(retryErr);
-            else resolve(retryResults);
-          });
+          try {
+            const [retryResults] = await pool.query(sql, params);
+            resolve(retryResults);
+          } catch (retryErr: any) {
+            reject(retryErr);
+          }
         }
+      return reject(err); // Reject other errors
+    }
 
-        return reject(err); // Reject other errors
-      }
-      resolve(results);
-    });
   });
 }
+
+// // TODO: Remove debug prints
+// async function query(sql: string, params: any[]): Promise<any> {
+//     try {
+//         const [results] = await pool.query(sql, params);
+//         if (results === null) console.log('queryResults === null');
+//         console.log('query: queryResults=' + results + '<end>');
+//         return [results, null];
+//     } catch (err: any) {
+//         console.log('query: caught an error in query')
+//         if (["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(err.code)) {
+//             console.warn("Database connection lost. Creating a new pool...");
+//             // pool.end(); // Close the old pool
+//             pool = mysql.createPool(dbConnectionConfig); // Recreate pool
+//
+//             // Retry the query with the new pool
+//             try {
+//               const [retryResults] = await pool.query(sql, params);
+//               console.log('query: retryResults=' + retryResults + '<end>');
+//               return [retryResults, null];
+//             } catch (retryErr: any) {
+//               console.log('query: caught an error in query')
+//               return [null, retryErr];
+//             }
+//         }
+//         // Return other errors
+//         return [null, err];
+//     }
+// }
 
 function validateStringFieldLengths(stringFields: Object) {
   for (const [fieldName, value] of Object.entries(stringFields)) {

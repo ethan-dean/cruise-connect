@@ -93,7 +93,8 @@ cruisesRouter.post('/get-my-cruises', authenticateToken, async (req: any, res: a
             return {
                 cruiseId,
                 departureDate: cruise.cruiseDepartureDate,
-                shipName: ship ? ship.shipName : "Unknown Ship"
+                shipName: ship ? ship.shipName : "Unknown Ship",
+                shipId: cruise.shipId
             };
         }));
 

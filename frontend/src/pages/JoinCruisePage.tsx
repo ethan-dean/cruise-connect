@@ -2,13 +2,17 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DateCalendar, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { format } from "date-fns";
 
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
+import Loading from "../modules/loadingModule/Loading";
+import missingImage from "../assets/missing-image.jpg";
 
 
 // TODO: Add ability to go back in steps...
 export default function JoinCruisePage() {
+  const [companyName, setCompanyName] = useState<String>('');
   const [shipName, setShipName] = useState<String>('');
   const [shipId, setShipId] = useState<number>(-1);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -91,30 +95,48 @@ export default function JoinCruisePage() {
   }
 
   return (
-    <div className='join-cruise-page__container'>
-      <h1 className='join-cruise-page__title'>Join Cruise</h1>
-      {showCompanies && companyData.map(c => ( 
-        <button
-          key={c.companyId}
-          className='join-cruise-page__company-button' 
-          onClick={() => { getShipData(c.companyId); setShowCompanies(false); setShowShips(true); } }
-        >
-          {c.companyName}
-        </button>
-      ))}
+    <div className='mt-5'>
+      <h1 className='text-center text-2xl font-bold'>Find Your Cruise!</h1>
 
-      {showShips && shipData.map(s => (
-        <button
-          key={s.shipId}
-          className='join-cruise-page__ship-button' 
-          onClick={() => { setShipId(s.shipId); setShipName(s.shipName); setShowShips(false); setShowCalendar(true); } }
-        >
-          {s.shipName}
-        </button>
-      ))}
+      {showCompanies && (
+        <div>
+          <h2 className='mt-6 text-center text-xl font-semibold'>Who are you cruising with?</h2>
+          <div className='mt-4 w-[340px] mx-auto flex flex-wrap gap-5'>
+            {!companyData ? <Loading/> : companyData.map(c => (
+              <button 
+                key={c.companyId}
+                className='p-2 rounded-md shadow-md bg-white' 
+                onClick={() => { setCompanyName(c.companyName); getShipData(c.companyId); setShowCompanies(false); setShowShips(true); } }
+              > 
+                <img className='w-36 rounded-md' src={`../company-${c.companyId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
+                <p className='w-36 font-semibold'>{c.companyName}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showShips && (
+        <div>
+          <h2 className='mt-6 text-center text-xl font-semibold'>What ship are you cruising on?</h2>
+          <div className='mt-4 w-[340px] mx-auto flex flex-wrap gap-5'>
+            {!shipData ? <Loading /> : shipData.map(s => (
+              <button
+                key={s.shipId}
+                className='p-2 rounded-md shadow-md bg-white' 
+                onClick={() => { setShipId(s.shipId); setShipName(s.shipName); setShowShips(false); setShowCalendar(true); } }
+              >
+                <img className='w-36 rounded-md' src={`../ship-${s.shipId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
+                <p className='w-36 font-semibold'>{s.shipName}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {showCalendar && (
-        <div>
+        <div className='flex flex-col items-center'>
+          <h2 className='mt-6 mb-2 text-center text-xl font-semibold'>When is your cruise departing?</h2>
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <DateCalendar
               value={selectedDate}
@@ -122,23 +144,28 @@ export default function JoinCruisePage() {
             />
           </LocalizationProvider>
           <button
-            className='join-cruise-page__next-button' 
+            className='w-30 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
             onClick={() => { setShowCalendar(false); setShowSummary(true); } }
           >
-            Next
+            Find Cruise
           </button>
         </div>
       )}
 
       {showSummary && (
-        <div>
-          <p>{shipName}</p>
-          <p>{selectedDate!.toDateString()}</p>
+        <div className='flex flex-col items-center'>
+          <h2 className='mt-6 text-center text-xl font-semibold'>Summary</h2>
+          <img className='mt-3 w-60 rounded-md' src={`../ship-${shipId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
+          <div className='w-60'>
+            <p className='text-xl font-bold'>{shipName}</p>
+            <p>{companyName}</p>
+            <p>{format((selectedDate!), "MMMM do, yyyy")}</p>
+          </div>
           <button
-            className='join-cruise-page__join-button' 
+            className='mt-5 w-30 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
             onClick={() => joinCruise() }
           >
-            Join!
+            Join Cruise
           </button>
         </div>
       )}

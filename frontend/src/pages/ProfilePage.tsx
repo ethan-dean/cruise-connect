@@ -121,7 +121,13 @@ export default function ProfileCreatePage() {
       });
 
       if (!response.ok) {
-        setImageError("Upload failed");
+        try {
+          const data = await response.json();
+          setImageError(data.error || "Upload failed");
+        } catch (error) {
+          setImageError("Upload failed");
+        }
+        return;
       }
 
       // Get the processed image as a blob
@@ -132,6 +138,9 @@ export default function ProfileCreatePage() {
       // Don't need to get the processed image as a blob just 
       // cache bust with the url for the profile picture 
       setImageCacheBuster(Date.now());
+
+      // If made it this far, upload succeeded close the profile picture popup
+      setShowImagePopup(false);
     } catch (error) {
       setImageError("Error uploading file");
     }
@@ -247,7 +256,7 @@ export default function ProfileCreatePage() {
 
       {showImagePopup && (
         <div className='absolute top-0 right-0 w-screen h-screen flex justify-center items-center z-50 bg-black/50'>
-          <div className='bg-white w-[90vw] h-[15vh] p-5 rounded-lg'>
+          <div className='bg-white w-[90vw] h-[17vh] p-5 rounded-lg'>
             <div className='flex justify-between'>
               <h2 className='text-xl font-semibold'>Update Profile Picture</h2>
               <button onClick={() => { setShowImagePopup(false); setImageError(null); } } >
@@ -255,8 +264,8 @@ export default function ProfileCreatePage() {
               </button>
             </div>
             <label className='relative top-[3vh] w-40 py-1.5 px-2.5 bg-blue-400 rounded-full text-lg text-white font-semibold' htmlFor="pictureUpload">Choose New Picture</label>
-            <input className='hidden' id='pictureUpload' type="file" accept="image/*" onChange={e => { setImageError(null); handleFileChange(e); setShowImagePopup(false); } } />
-            {imageError && <p className='profile-create-page__error'>{imageError}</p>}
+            <input className='hidden' id='pictureUpload' type="file" accept="image/*" onChange={e => { setImageError(null); handleFileChange(e); } } />
+            {imageError && <p className='mt-9 ml-1 text-sm text-red-700'>{imageError}</p>}
 
             {
             // TODO: Implement previews before saving profile picture change
@@ -302,7 +311,7 @@ export default function ProfileCreatePage() {
                       setBioError(validateBio(e.target.value));
                     }}
                   />
-                  {bioError && <p className='profile-create-page__error'>{bioError}</p>}
+                  {bioError && <p className='mt-1 text-sm text-red-700'>{bioError}</p>}
                 </div>
 
                 <div className=''>
@@ -318,7 +327,7 @@ export default function ProfileCreatePage() {
                           setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
                         }}
                       />
-                      {socialErrors[s] && <p className='profile-create-page__error'>{socialErrors[s]}</p>}
+                      {socialErrors[s] && <p className='mt-1 text-sm text-red-700'>{socialErrors[s]}</p>}
                     </div>
                   ))}
                 </div>
