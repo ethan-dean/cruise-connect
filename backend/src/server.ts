@@ -65,7 +65,7 @@ expressServer.use("/profilePictureDb",
 
 // Serve up frontend static files (images, etc.).
 expressServer.use(
-  express.static(path.resolve('./dist'))
+  express.static(path.resolve('./frontendDist'))
 );
 
 expressServer.use((_: any, res: any) => {

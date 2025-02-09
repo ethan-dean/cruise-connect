@@ -11,6 +11,9 @@ node_modules
 # Compiled .ts files
 dist
 
+# Compiled frontend files
+frontendDist
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
