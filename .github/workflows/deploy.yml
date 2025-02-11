@@ -54,9 +54,16 @@ jobs:
         # Sync built project files to the server
         ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
         rsync -avz \
-          --include "dist/" \
-          --include "package.json" \
-          --include "package-lock.json" \
+          --include "backend/" \
+          --include "backend/dist/***" \
+          --include "backend/package.json" \
+          --include "backend/package-lock.json" \
           --exclude "*" \
-          ./backend $SERVER_USER@$SERVER_HOST:$DEPLOY_PATH
+          ./backend/ $SERVER_USER@$SERVER_HOST:$DEPLOY_PATH
+        # rsync -avz \
+        #   --include "dist/" \
+        #   --include "package.json" \
+        #   --include "package-lock.json" \
+        #   --exclude "*" \
+        #   ./backend $SERVER_USER@$SERVER_HOST:$DEPLOY_PATH
         ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "pm2 restart cc_prod"
