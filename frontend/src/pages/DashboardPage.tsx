@@ -28,7 +28,7 @@ export default function DashboardPage() {
     };
   };
   useEffect(() => {
-    getJoinedCruisesData()
+    getJoinedCruisesData();
   }, []);
 
   return  (

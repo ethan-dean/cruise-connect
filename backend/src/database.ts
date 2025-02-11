@@ -391,7 +391,6 @@ async function deleteJoinedCruisesByUser(userId: number): Promise<[string | null
 
   try {
     const results = await query(deleteJoinedCruiseQuery, [userId]);
-    if (results.affectedRows === 0) return ['DATABASE_QUERY_ERROR', null];
     return [null, results];
   } catch (err: any) {
     return [err, null];

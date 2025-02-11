@@ -176,6 +176,7 @@ export default function ValidatePasswordResetPage() {
           <input
             type="text"
             id="emailCode"
+            autoComplete="one-time-code"
             className={`password-reset-page__input ${emailCodeError ? 'password-reset-page__input--error' : ''}`}
             value={emailCode}
             onChange={(e) => handleEmailCodeChange(e.target.value)}
@@ -189,6 +190,7 @@ export default function ValidatePasswordResetPage() {
           <input
             type="password"
             id="newPassword"
+            autoComplete="new-password"
             className={`password-reset-page__input ${newPasswordErrors.length > 0 ? 'password-reset-page__input--error' : ''}`}
             value={newPassword}
             onChange={(e) => handleNewPasswordChange(e.target.value)}

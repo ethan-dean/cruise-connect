@@ -149,6 +149,7 @@ export default function VerifyEmailPage() {
           <input
             type="text"
             id="emailCode"
+            autoComplete="one-time-code"
             className={`verify-email-page__input ${emailCodeError ? 'verify-email-page__input--error' : ''}`}
             value={emailCode}
             onChange={(e) => handleEmailCodeChange(e.target.value)}

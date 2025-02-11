@@ -6,7 +6,7 @@ import { ProfileDoneContext } from '../contexts/ProfileDoneContext';
 
 export default function AuthProtectedRoutesLayout() {
   const { isAuthenticated } = useContext(AuthContext);
-  const { isProfileDone } = useContext(ProfileDoneContext);
+  const { isProfileDone, checkIfProfileDone } = useContext(ProfileDoneContext);
 
   const location = useLocation();
 
@@ -18,6 +18,7 @@ export default function AuthProtectedRoutesLayout() {
   }
 
   if (isProfileDone === null) {
+    checkIfProfileDone();
     return null;
   }
   if (!isProfileDone && location.pathname !== '/dashboard/create-profile') {

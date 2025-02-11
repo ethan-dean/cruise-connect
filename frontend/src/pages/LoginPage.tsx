@@ -7,12 +7,6 @@ import getBackendUrl from '../utils/getBackendUrl';
 import '../css/LoginPage.css';
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useContext(AuthContext);
-
-  if (isAuthenticated) {
-    return <Navigate to='/dashboard' />;
-  }
-
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
@@ -23,6 +17,12 @@ export default function LoginPage() {
   const [showNotVerifiedPopup, setShowNotVerifiedPopup] = useState(false);
 
   const navigate = useNavigate();
+
+  const { login, isAuthenticated } = useContext(AuthContext);
+
+  if (isAuthenticated) {
+    return <Navigate to='/dashboard' />;
+  }
 
   // Validation functions
   const validateEmail = (value: string): string => {
@@ -107,6 +107,7 @@ export default function LoginPage() {
           <input
             type="email"
             id="email"
+            autoComplete="email"
             className={`login-page__input ${emailError ? 'login-page__input--error' : ''}`}
             value={email}
             onChange={(e) => handleEmailChange(e.target.value)}
@@ -120,6 +121,7 @@ export default function LoginPage() {
           <input
             type="password"
             id="password"
+            autoComplete="current-password"
             className={`login-page__input ${passwordError ? 'login-page__input--error' : ''}`}
             value={password}
             onChange={(e) => handlePasswordChange(e.target.value)}

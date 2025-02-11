@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { differenceInYears, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import heic2any from "heic2any";
 
 import { AuthContext } from "../contexts/AuthContext";
 import fetchWithAuth from "../utils/fetchWithAuth";
@@ -110,8 +111,30 @@ export default function ProfileCreatePage() {
     // Handle file selection
     if (!event.target.files) return;
 
+    const file: Blob = event.target.files[0];
     const formData = new FormData();
-    formData.append("image", event.target.files[0]);
+
+    if (file.type === 'image/heic' || file.type === 'image/heif') {
+      // Convert HEIC to PNG or JPEG using heic2any in the browser
+      try {
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.20,
+        });
+        if (convertedBlob instanceof Blob) {
+          const convertedFile = new File([convertedBlob], 'convertedImage.jpeg', { type: 'image/jpeg' });
+          formData.append('image', convertedFile);
+        } else {
+          setImageError('Unexpected conversion result');
+          return;
+        }
+      } catch (err: any) {
+        console.log('Upload image error: Error converting image to png');
+      }
+    } else {
+      formData.append('image', file);
+    }
 
     // Upload profile picture and display processed image
     try {

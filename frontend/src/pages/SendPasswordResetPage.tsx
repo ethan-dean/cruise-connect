@@ -96,6 +96,7 @@ export default function SendPasswordResetPage() {
           <input
             type="email"
             id="email"
+            autoComplete="email"
             className={`send-password-reset-page__input ${emailError ? 'send-password-reset-page__input--error' : ''}`}
             value={email}
             onChange={(e) => handleEmailChange(e.target.value)}

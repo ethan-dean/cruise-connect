@@ -294,8 +294,8 @@ usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =
   const userId: number = req.token.userId; 
 
   // Delete user from any cruises they joined.
-  const [ deleteJoinedCruisesErr, _deleteJointedCruisesResults ] = await deleteJoinedCruisesByUser(userId);
-  if (respondIf(Boolean(deleteJoinedCruisesErr), res, 500, 'Failed to delete user', deleteJoinedCruisesErr)) return;
+  const [ deleteJoinedCruisesErr, _deleteJoinedCruisesResults ] = await deleteJoinedCruisesByUser(userId);
+  if (respondIf(Boolean(deleteJoinedCruisesErr), res, 500, 'Failed to delete users cruises', deleteJoinedCruisesErr)) return;
 
   // Delete user from the database.
   const [ err, _results ] = await deleteUser(userId);
@@ -384,24 +384,27 @@ usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Upload and compress profile picture endpoint.
-// TODO: Standardize error handling responses, updating profile picture not working
+// TODO: Standardize error handling responses, json error responeses are not working? because of multer(upload.single)?
 usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('image'), async (req: any, res: any) => {
   const userId: number = req.token.userId;
 
   try {
     if (!req.file) {
       res.status(400).json({ error: "No file uploaded" });
+      console.error('Upload picture error: No file uploaded')
       return;
     }
 
-    // Validate file type (only allow JPEG & PNG)
+    // Validate file type (only allow JPEG PNG)
     if (!["image/jpeg", "image/png"].includes(req.file.mimetype)) {
-      res.status(400).json({ error: "Invalid file type. Only JPEG and PNG allowed." });
+      console.error('Upload picture error: File type unsupported')
+      res.status(400).json({ error: "Invalid file type. Only JPEG and PNG allowed (some types converted in frontend)." });
       return;
     }
 
     // Validate file size (limit to 2MB)
     if (req.file.size > 2 * 1024 * 1024) {
+      console.error('Upload picture error: File size too big')
       res.status(400).json({ error: "File too large. Max size is 2MB." });
       return;
     }
@@ -434,9 +437,9 @@ usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('im
     // Send the compressed image back to user
     res.setHeader("Content-Type", "image/webp");
     res.send(processedImage);
-  } catch (error) {
+  } catch (error: any) {
     res.setHeader("Content-Type", "application/json");
-    res.send(error);
+    res.status(500).json({error: error.message || 'Unkown error'});
   }
 });
 
