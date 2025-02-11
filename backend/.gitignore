@@ -9,10 +9,8 @@ profilePictureDb/
 node_modules
 
 # Compiled .ts files
-dist
-
 # Compiled frontend files
-frontendDist
+dist
 
 # Editor directories and files
 .vscode/*

@@ -1,0 +1,62 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Build Frontend
+      working-directory: ./frontend
+      run: |
+        npm install
+        npm run build
+
+    - name: Move Frontend Build to Backend
+      run: |
+        rm -rf ./backend/dist/client/
+        mkdir -p ./backend/dist/client/
+        cp -r ./frontend/dist/* ./backend/dist/client/
+
+    - name: Compile backend
+      working-directory: ./backend
+      run: |
+        npm install
+        tsc
+
+    - name: Install Rsync if Not Installed
+      run: |
+        if ! command -v rsync &> /dev/null; then
+          echo "Rsync not found. Installing..."
+          sudo apt-get update && sudo apt-get install -y rsync
+        else
+          echo "Rsync is already installed."
+        fi
+
+    - name: Deploy to Server
+      env:
+        SERVER_USER: ubuntu
+        SERVER_HOST: thecruiseconnect.com
+        DEPLOY_PATH: /home/ubuntu/deployments/cc/
+      run: |
+        # Sync built project files to the server
+        ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+        rsync -avz \
+          --include "dist/" \
+          --include "package.json" \
+          --include "package-lock.json" \
+          --exclude "*" \
+          ./backend $SERVER_USER@$SERVER_HOST:$DEPLOY_PATH
+        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "pm2 restart cc_prod"

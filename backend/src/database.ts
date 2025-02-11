@@ -230,7 +230,6 @@ async function getUserFromId(userId: number): Promise<[string|null, any]> {
   // Query database.
   try {
     const results = await query(getUserQuery, [userId]);
-    console.log(results)
     // There can only be one user with each userId, just extra sanity check
     if (results.length > 1) return ['DATABASE_QUERY_ERROR', null];
     return [ null, results?.[0] ];

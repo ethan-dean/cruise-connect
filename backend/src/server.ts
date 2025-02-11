@@ -23,9 +23,9 @@ expressServer.set('trust proxy', 1);
 // Morgan provides express easier docker HTTP logging that default logs to stdout.
 expressServer.use(morgan('dev'));
 // Allow requests from the following addresses, production and development.
-// www.your_domain.com is re-routed to your_domain.com by nginx setup.
+// www.thecruiseconnect.com is re-routed to thecruiseconnect.com by nginx setup.
 expressServer.use(cors({
-  origin: ['https://your_domain.com', `http://localhost:${devServerPort}`],
+  origin: ['https://thecruiseconnect.com', `http://localhost:${devServerPort}`],
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   credentials: true,      // Allow cookies to be sent/received
@@ -51,11 +51,11 @@ expressServer.use((req: any, res: any, next: any) => {
     res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     res.header('Expires', '-1');
     res.header('Pragma', 'no-cache');
-    res.sendFile(path.resolve('./dist/index.html'));
+    res.sendFile(path.resolve('./dist/client/index.html'));
   }
 });
 
-// Serve up backend static files uploaded from users(images).
+// Serve up backend files uploaded from users(images).
 expressServer.use("/profilePictureDb", 
   express.static(path.resolve('./profilePictureDb/'), {
         maxAge: "1h", // Cache images for 1 hour
@@ -65,7 +65,7 @@ expressServer.use("/profilePictureDb",
 
 // Serve up frontend static files (images, etc.).
 expressServer.use(
-  express.static(path.resolve('./frontendDist'))
+  express.static(path.resolve('./dist/client'))
 );
 
 expressServer.use((_: any, res: any) => {
