@@ -54,10 +54,9 @@ jobs:
         # Sync built project files to the server
         ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
         rsync -avz \
-          --include "backend/" \
-          --include "backend/dist/***" \
-          --include "backend/package.json" \
-          --include "backend/package-lock.json" \
+          --include "dist/***" \
+          --include "package.json" \
+          --include "package-lock.json" \
           --exclude "*" \
           ./backend/ $SERVER_USER@$SERVER_HOST:$DEPLOY_PATH
         # rsync -avz \
