@@ -43,6 +43,8 @@ export default function ProfileCreatePage() {
   const [showConfirm, setShowConfirm] = useState<boolean>(false);
   const [imageCacheBuster, setImageCacheBuster] = useState<number>(Date.now());
 
+  const [imageContentLoaded, setImageContentLoaded] = useState<boolean>(false);
+
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
 
@@ -269,12 +271,14 @@ export default function ProfileCreatePage() {
       </div>
 
       <button className='mt-1 mx-2 h-[calc(100vw-16px)] w-[calc(100vw-16px)]' onClick={() => setShowImagePopup(true)}>
-        <img className='rounded-md' src={`${getBackendUrl()}/profilePictureDb/${userData.imageId}.webp?cache=${imageCacheBuster}`} />
-        <div className='relative -top-[calc(50vw-8px)] h-[calc(50vw-8px)] flex justify-center items-center rounded-t-[calc(50vw-8px)] rounded-b-md bg-black/60 text-white text-3xl font-semibold'>
-          <p className='w-[calc(70vw-8px)]'>
-            Click to change picture.
-          </p>
-        </div>
+        <img className='rounded-md' src={`${getBackendUrl()}/profilePictureDb/${userData.imageId}.webp?cache=${imageCacheBuster}`} onLoad={() => setImageContentLoaded(true)} />
+        {imageContentLoaded && 
+          <div className='relative -top-[calc(50vw-8px)] h-[calc(50vw-8px)] flex justify-center items-center rounded-t-[calc(50vw-8px)] rounded-b-md bg-black/60 text-white text-3xl font-semibold'>
+            <p className='w-[calc(70vw-8px)]'>
+              Click to change picture.
+            </p>
+          </div>
+        }
       </button>
 
       {showImagePopup && (
