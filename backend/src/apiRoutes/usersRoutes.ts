@@ -402,8 +402,8 @@ usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('im
       return;
     }
 
-    // Validate file size (limit to 2MB)
-    if (req.file.size > 5 * 1024 * 1024) {
+    // Validate file size (limit to 8MB)
+    if (req.file.size > 8 * 1024 * 1024) {
       console.error('Upload picture error: File size too big')
       res.status(400).json({ error: "File too large. Max size is 2MB." });
       return;
@@ -425,10 +425,18 @@ usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('im
       if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
     }
 
+    const originalSize = req.file.size; // Original image size in bytes
+    let quality = 80; // Default quality
+    // Adjust quality based on original file size
+    if (originalSize > 500 * 1024) quality = 70; // Reduce quality for images > 500KB
+    if (originalSize > 1 * 1024 * 1024) quality = 60; // Reduce quality for images > 1MB
+    if (originalSize > 2 * 1024 * 1024) quality = 50; // Reduce quality for images > 2MB
+    if (originalSize > 4 * 1024 * 1024) quality = 40; // Reduce quality for images > 2MB
+    if (originalSize > 6 * 1024 * 1024) quality = 30; // Further reduction for very large images
     // Resize & compress the image
     const processedImage = await sharp(req.file.buffer)
       .resize(512, 512) // Resize to 512x512
-      .webp({ quality: 80 }) // Convert to WebP (smaller size, high quality)
+      .webp({ quality }) // Convert to WebP (smaller size, high quality)
       .toBuffer();
 
     // Save compressed image to disk asynchronously

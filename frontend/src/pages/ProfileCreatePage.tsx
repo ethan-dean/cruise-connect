@@ -108,6 +108,10 @@ export default function ProfileCreatePage() {
         });
         if (convertedBlob instanceof Blob) {
           const convertedFile = new File([convertedBlob], 'convertedImage.jpeg', { type: 'image/jpeg' });
+          if (file.size > 8 * 1024 * 1024) {
+            setImageError('File too large, must be smaller than 8 KB');
+            return;
+          }
           formData.append('image', convertedFile);
         } else {
           setImageError('Unexpected conversion result');
@@ -116,8 +120,15 @@ export default function ProfileCreatePage() {
       } catch (err: any) {
         console.log('Upload image error: Error converting image to png');
       }
-    } else {
+    } else if (file.type === 'image/jpeg' || file.type === 'image/png') {
+      if (file.size > 8 * 1024 * 1024) {
+        setImageError('File too large, must be smaller than 8 KB');
+        return;
+      }
       formData.append('image', file);
+    } else {
+      setImageError('File must be a JPEG, PNG, or HEIC');
+      return;
     }
 
     // Upload profile picture and display processed image
