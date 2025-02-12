@@ -403,7 +403,7 @@ usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('im
     }
 
     // Validate file size (limit to 2MB)
-    if (req.file.size > 2 * 1024 * 1024) {
+    if (req.file.size > 5 * 1024 * 1024) {
       console.error('Upload picture error: File size too big')
       res.status(400).json({ error: "File too large. Max size is 2MB." });
       return;
