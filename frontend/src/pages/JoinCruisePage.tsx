@@ -123,7 +123,7 @@ export default function JoinCruisePage() {
             {!shipData ? <Loading /> : shipData.map(s => (
               <button
                 key={s.shipId}
-                className='p-2 rounded-md shadow-md bg-white' 
+                className='p-2 flex flex-col justify-start items-start rounded-md shadow-md bg-white' 
                 onClick={() => { setShipId(s.shipId); setShipName(s.shipName); setShowShips(false); setShowCalendar(true); } }
               >
                 <img className='w-36 rounded-md' src={`../ship-${s.shipId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
