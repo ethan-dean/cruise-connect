@@ -121,10 +121,27 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
 
   // Send verification email.
   const mailOptions: object = {
-    from: 'your_email@example.com',
+    from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com',
     to: email,
-    subject: 'Email Verification',
-    text: `Your verification code is: ${emailCode}`
+    subject: 'Verify Your Email Address',
+    text: `Dear ${getUserResult.firstName || 'User'},
+
+    Thank you for signing up. To complete your registration, please use the verification code below:
+
+    Verification Code: ${emailCode}
+
+    If you did not request this, please ignore this email.
+
+    Best regards,  
+    Cruise Connect`,
+    html: `<div style="text-align: center;">
+             <img src="https://thecruiseconnect.com/email-header.png" alt="Cruise Connect" style="width:100%; max-width:600px; margin-bottom:20px;">
+           </div>
+           <p>Dear ${getUserResult.firstName || 'User'},</p>
+           <p>Thank you for signing up. To complete your registration, please use the verification code below:</p>
+           <h2 style="color: #2E86C1;">${emailCode}</h2>
+           <p>If you did not request this, please ignore this email.</p>
+           <p>Best regards,<br>Cruise Connect</p>`
   };
   getMailer().sendMail(mailOptions, (err: any, _info: any) => {
     if (err) {
@@ -223,10 +240,27 @@ usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
   
   // Send reset code email.
   const mailOptions = {
-    from: 'your_email@example.com',
+    from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com',
     to: email,
     subject: 'Password Reset Request',
-    text: `Your password reset code is: ${emailCode}\nNot you? Just ignore this email.`
+    text: `Dear ${getUserResult.firstName || 'User'},
+
+            We received a request to reset your password. Please use the verification code below to proceed:
+
+            Password Reset Code: ${emailCode}
+
+            If you did not request this, please ignore this email.
+
+            Best regards,  
+            Cruise Connect`,
+    html: `<div style="text-align: center;">
+             <img src="https://thecruiseconnect.com/email-header.png" alt="Cruise Connect" style="width:100%; max-width:600px; margin-bottom:20px;">
+           </div>
+           <p>Dear ${getUserResult.firstName || 'User'},</p>
+           <p>We received a request to reset your password. Please use the verification code below to proceed:</p>
+           <h2 style="color: #D35400;">${emailCode}</h2>
+           <p>If you did not request this, please ignore this email.</p>
+           <p>Best regards,<br>Cruise Connect</p>`
   };
   getMailer().sendMail(mailOptions, (err, _info) => {
     if (err) {
