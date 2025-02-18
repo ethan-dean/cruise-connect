@@ -29,8 +29,8 @@ export default function CountdownPopup(props: CountdownPopupProps) {
   return (
     <div className='popup-overlay'>
       <div className='popup'>
-        <p>{props.displayText}</p>
-        <p>Redirecting in {timeLeft} seconds...</p>
+        <p className='popup-display-text'>{props.displayText}</p>
+        <p className='popup-countdown-text'>Redirecting in <b>{timeLeft}</b> seconds...</p>
       </div>
     </div>
   );

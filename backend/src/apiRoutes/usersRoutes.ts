@@ -107,7 +107,7 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
   if (respondIf(!accountExists, res, 400, 'Server error, try again later...', 'Failed getUserFromEmail: ' + getUserErr)) return;
   // Validate email is not verified.
   const emailVerified: boolean = getUserResult.emailVerified;
-  if (respondIf(emailVerified, res, 204, 'Account already verified', 'ACCOUNT_ALREADY_VERIFIED')) return;
+  if (respondIf(emailVerified, res, 400, 'Account already verified', 'ACCOUNT_ALREADY_VERIFIED')) return;
   // Validate there is not an existing code, do not create new code on a redirect, do on resend button.
   const isExistingCodeValid: boolean = (Date.now() / 1000) < getUserResult.emailCodeTimeout;
   if (respondIf(isExistingCodeValid && !forceResend, res, 200, 'Existing email code still valid, did not force resend')) return;
@@ -166,7 +166,7 @@ usersRouter.post('/check-verification-code', async (req: any, res: any) => {
   if (respondIf(!accountExists, res, 400, 'Server error, try again later...', 'Failed getUserFromEmail: ' + getUserErr)) return;
   // Validate email is not verified.
   const emailVerified: boolean = getUserResult.emailVerified;
-  if (respondIf(emailVerified, res, 204, 'Account already verified', 'ACCOUNT_ALREADY_VERIFIED')) return;
+  if (respondIf(emailVerified, res, 400, 'Account already verified', 'ACCOUNT_ALREADY_VERIFIED')) return;
   // Validate code is not timed out, else frontend will prompt user to press resend code.
   const isCodeTimedOut: boolean = getUserResult.emailCodeTimeout < (Date.now() / 1000);
   if (respondIf(isCodeTimedOut, res, 401, 'Email verification code timed out', 'EMAIL_CODE_TIMEOUT')) return;
@@ -351,7 +351,7 @@ usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =
     expires: new Date(0), // Expire the cookie immediately
   });
 
-  res.status(204).json({ message: 'Deleted user successfully' });
+  res.status(400).json({ message: 'Deleted user successfully' });
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////

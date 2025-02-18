@@ -12,11 +12,6 @@ export default function VerifyEmailPage() {
   const { isAuthenticated, login } = useContext(AuthContext);
   const { isProfileDone, checkIfProfileDone } = useContext(ProfileDoneContext);
 
-  if (isAuthenticated) {
-    console.log(`verifyEmailpage: ${isProfileDone}`);
-    return <Navigate to={isProfileDone ? '/dashboard' : '/dashboard/create-profile'} />;
-  }
-
   const [emailCode, setEmailCode] = useState('');
   const [email, setEmail] = useState('');
 
@@ -27,6 +22,10 @@ export default function VerifyEmailPage() {
   const [showAlreadyVerifiedPopup, setShowAlreadyVerifiedPopup] = useState(false);
 
   const navigate = useNavigate();
+
+  if (isAuthenticated) {
+    return <Navigate to={isProfileDone ? '/dashboard' : '/dashboard/create-profile'} />;
+  }
 
   // Send code to user's email.
   const sendEmailCode = async ({ destinationEmail = email, forceResend = false }: { destinationEmail?: string, forceResend?: boolean}) => {
@@ -67,7 +66,6 @@ export default function VerifyEmailPage() {
       navigate('/login')
       return;
     }
-    console.log('storedString: ' + storedString)
     setEmail(storedString);
     sendEmailCode({ destinationEmail: storedString });
   }, []);
@@ -199,7 +197,7 @@ export default function VerifyEmailPage() {
       {/* Conditionally render the "Countdown Popup" in case a user is already verified */}
       {showAlreadyVerifiedPopup && (
         <CountdownPopup
-          displayText="Your account is already verified, being redirected to login page..."
+          displayText="Your account is already verified, you are being redirected to the login page..."
           countdownTimeSeconds={5} // countdown from 5 seconds
           navigateDestination="/login"
         />
