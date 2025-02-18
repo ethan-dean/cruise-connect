@@ -47,6 +47,8 @@ export default function VerifyEmailPage() {
         const data = await response.json();
         if (data.error === 'ACCOUNT_ALREADY_VERIFIED') {
           setShowAlreadyVerifiedPopup(true);
+        } else if (data.code === 400) {
+          navigate('/login');
         }
         setGeneralError(data.message || 'Server connection error, try again later...');
       }
@@ -58,13 +60,14 @@ export default function VerifyEmailPage() {
 
   // Retrieve user's email from localStorage and send code to user's email.
   useEffect(() => {
-    const storedString: string = localStorage.getItem('userEmail') || '';
+    const storedString: string | null = localStorage.getItem('userEmail') || null
     // If no userEmail from loginPage or registerPage, or invalid email 
     // redirect to login to input email again.
     if (!storedString || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(storedString)) {
       navigate('/login')
       return;
     }
+    console.log('storedString: ' + storedString)
     setEmail(storedString);
     sendEmailCode({ destinationEmail: storedString });
   }, []);

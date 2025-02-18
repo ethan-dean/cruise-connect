@@ -33,9 +33,23 @@ export default function HeaderLayout() {
         </div>
       </header>
 
-      <main className='m-0 mt-[8vh] p-0 flex justify-center h-[92%]'>
-        <Outlet />
-      </main>
+      <div className='flex flex-col min-h-[100vh]'>
+       <main className='mt-[8vh] m-0 p-0 grow flex justify-center'>
+         <Outlet />
+       </main>
+
+        <footer className='mt-10 w-screen py-5 flex flex-col justify-between items-center'>
+          <div className='w-[70vw] flex flex-wrap justify-center'>
+            <a className='px-2 text-gray-600 text-sm underline' href='mailto:bugs@thecruiseconnect.com'>Report an Issue?</a>
+            <a className='px-2 text-gray-600 text-sm underline' href='mailto:help@thecruiseconnect.com'>Contact Us</a>
+          </div>
+          <div className='w-[70vw] flex flex-col items-center'>
+            <Link className='mt-2 px-2 text-gray-600 text-sm underline' to='/terms-of-service'>Terms of Service</Link>
+            <Link className='mt-2 px-2 text-gray-600 text-sm underline' to='/privacy-policy'>Privacy Policy</Link>
+          </div>
+          <p className='mt-2 px-2 text-gray-600 text-sm'>Copyright © {new Date().getFullYear()} Cruise Connect, LLC</p>
+        </footer>
+      </div>
     </div>
   );
 }
