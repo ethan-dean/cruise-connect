@@ -28,11 +28,11 @@ export default async function fetchWithAuth(url: string, options: any ) {
   if (response.status === 401 || response.status === 403) {
     const error = await refreshAccessToken();
     if (error) {
-      return error;
+      return new Response(JSON.stringify({ error: error}), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
-      return 'TOKEN_REFRESH_ERROR';
+      return new Response(JSON.stringify({ error: "TOKEN_REFRESH_ERROR"}), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
 
     response = await fetch(url, {
