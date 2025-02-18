@@ -351,7 +351,7 @@ usersRouter.post('/delete-user', authenticateToken, async (req: any, res: any) =
     expires: new Date(0), // Expire the cookie immediately
   });
 
-  res.status(400).json({ message: 'Deleted user successfully' });
+  res.status(200).json({ message: 'Deleted user successfully' });
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
