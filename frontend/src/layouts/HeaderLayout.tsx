@@ -12,7 +12,7 @@ export default function HeaderLayout() {
     <div className='w-screen h-screen'>
       <header className='fixed top-0 w-screen z-[45] flex justify-between items-center h-[8%] bg-white shadow-md'>
         <div className = 'flex pl-4'>
-          <Link className='text-lg font-semibold' to='/'>Cruise Connect</Link>
+          <Link className='text-lg font-semibold' to='/'><img className='w-[30vw] rounded-md' src='wordmark-logo-lightmode.png'/></Link>
         </div>
         <div className='flex justify-around pr-4'>
           { isAuthenticated ?
