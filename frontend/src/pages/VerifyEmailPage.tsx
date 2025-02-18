@@ -23,10 +23,6 @@ export default function VerifyEmailPage() {
 
   const navigate = useNavigate();
 
-  if (isAuthenticated) {
-    return <Navigate to={isProfileDone ? '/dashboard' : '/dashboard/create-profile'} />;
-  }
-
   // Send code to user's email.
   const sendEmailCode = async ({ destinationEmail = email, forceResend = false }: { destinationEmail?: string, forceResend?: boolean}) => {
     try {
@@ -69,6 +65,10 @@ export default function VerifyEmailPage() {
     setEmail(storedString);
     sendEmailCode({ destinationEmail: storedString });
   }, []);
+
+  if (isAuthenticated) {
+    return <Navigate to={isProfileDone ? '/dashboard' : '/dashboard/create-profile'} />;
+  }
 
   // Validation functions
   const validateEmailCode = (value: string): string => {
