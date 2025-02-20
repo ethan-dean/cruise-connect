@@ -108,7 +108,7 @@ export default function JoinCruisePage() {
                 className='p-2 rounded-md shadow-md bg-white' 
                 onClick={() => { setCompanyName(c.companyName); getShipData(c.companyId); setShowCompanies(false); setShowShips(true); } }
               > 
-                <img className='w-36 rounded-md' src={`../company-${c.companyId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
+                <img className='w-36 rounded-md' src={`/company-${c.companyId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
                 <p className='w-36 font-semibold'>{c.companyName}</p>
               </button>
             ))}
@@ -126,7 +126,7 @@ export default function JoinCruisePage() {
                 className='p-2 flex flex-col justify-start items-start rounded-md shadow-md bg-white' 
                 onClick={() => { setShipId(s.shipId); setShipName(s.shipName); setShowShips(false); setShowCalendar(true); } }
               >
-                <img className='w-36 rounded-md' src={`../ship-${s.shipId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
+                <img className='w-36 rounded-md' src={`/ship-${s.shipId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
                 <p className='w-36 font-semibold'>{s.shipName}</p>
               </button>
             ))}
@@ -155,7 +155,7 @@ export default function JoinCruisePage() {
       {showSummary && (
         <div className='flex flex-col items-center'>
           <h2 className='mt-6 text-center text-xl font-semibold'>Summary</h2>
-          <img className='mt-3 w-60 rounded-md' src={`../ship-${shipId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
+          <img className='mt-3 w-60 rounded-md' src={`/ship-${shipId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
           <div className='w-60'>
             <p className='text-xl font-bold'>{shipName}</p>
             <p>{companyName}</p>
