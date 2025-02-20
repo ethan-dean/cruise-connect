@@ -135,14 +135,14 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
     Best regards,  
     Cruise Connect`,
     html: `<div style="max-width: 600px; border: 4px solid black; border-radius: 10px;">
-             <div style="">
-               <img src="https://thecruiseconnect.com/email-header.png" alt="Cruise Connect" style="width:100%; margin-bottom:5px; border-radius: 5px 5px 0 0;">
+             <div style="width: 100%;">
+               <img src="https://thecruiseconnect.com/email-header.webp" alt="Cruise Connect" style="width:100%; margin-bottom:5px; border-radius: 5px 5px 0 0;">
              </div>
              <div style="max-width: 570px; padding: 0px 15px;">
                <p style="color: black;">${getUserResult.firstName || 'User'},</p>
                <p style="color: black;">Thank you for signing up. To complete your registration, please use the verification code below:</p>
                <h2 style="font-size: 3em; font-weight: bold; color: #2E86C1;">${emailCode}</h2>
-               <p style="color: black;">If you did not request this, please ignore this email.</p>
+               <p style="color: black;">If you did not request this, please ignore.</p>
                <p style="color: black;">Best regards,<br>Cruise Connect</p>
              </div>
            </div>`
@@ -258,14 +258,14 @@ usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
             Best regards,  
             Cruise Connect`,
     html: `<div style="max-width: 600px; border: 4px solid black; border-radius: 10px;">
-             <div style="">
-               <img src="https://thecruiseconnect.com/email-header.png" alt="Cruise Connect" style="width:100%; margin-bottom:5px; border-radius: 5px 5px 0 0;">
+             <div style="width: 100%;">
+               <img src="https://thecruiseconnect.com/email-header.webp" alt="Cruise Connect" style="width:100%; margin-bottom:5px; border-radius: 5px 5px 0 0;">
              </div>
              <div style="max-width: 570px; padding: 0px 15px;">
                <p style="color: black;">${getUserResult.firstName || 'User'},</p>
                <p style="color: black;">We received a request to reset your password. Please use the verification code below to proceed:</p>
                <h2 style="font-size: 3em; font-weight: bold; color: #2E86C1;">${emailCode}</h2>
-               <p style="color: black;">If you did not request this, please ignore this email.</p>
+               <p style="color: black;">If you did not request this, please ignore.</p>
                <p style="color: black;">Best regards,<br>Cruise Connect</p>
              </div>
            </div>`
