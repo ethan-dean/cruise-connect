@@ -140,6 +140,8 @@ export default function ProfileCreatePage() {
         return;
       }
     } else if (file.type === 'image/jpeg' || file.type === 'image/png') {
+      // This needs to be set in nginx as well, to allow requests 
+      // greater than the default size 1 MB.
       if (file.size > 8 * 1024 * 1024) {
         setImageError('File too large, must be smaller than 8 MB');
         return;

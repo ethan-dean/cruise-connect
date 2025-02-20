@@ -445,9 +445,11 @@ usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('im
     }
 
     // Validate file size (limit to 8MB)
+    // This needs to be set in nginx as well, to allow requests 
+    // greater than the default size 1 MB.
     if (req.file.size > 8 * 1024 * 1024) {
       console.error('Upload picture error: File size too big')
-      res.status(400).json({ error: "File too large. Max size is 2MB." });
+      res.status(400).json({ error: "File too large. Max size is 8MB." });
       return;
     }
 
@@ -477,6 +479,7 @@ usersRouter.post('/upload-profile-picture', authenticateToken, upload.single('im
     if (originalSize > 6 * 1024 * 1024) quality = 30; // Further reduction for very large images
     // Resize & compress the image
     const processedImage = await sharp(req.file.buffer)
+      .rotate()         // Rotates image based on EXIF metadata for orientation
       .resize(512, 512) // Resize to 512x512
       .webp({ quality }) // Convert to WebP (smaller size, high quality)
       .toBuffer();

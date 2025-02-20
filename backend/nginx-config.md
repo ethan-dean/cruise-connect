@@ -161,7 +161,12 @@ Then reload NGINX:
 sudo systemctl reload nginx
 ```
 
-You may want to redirect www.your_domain.com traffic to your_domain.com, for CORS issues:
+You may want to accept requests to your server with files over 1MB in size, put this in server declaration:
+```Nginx
+client_max_body_size [NUMBER_OF_MEGABYTES_INT]M;
+```
+
+You may want to redirect www.your_domain.com traffic to your_domain.com, for reduced CORS issues:
 ```Nginx
 server {
     listen 80;
