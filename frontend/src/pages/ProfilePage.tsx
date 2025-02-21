@@ -251,21 +251,21 @@ export default function ProfileCreatePage() {
   };
 
   return !userData ? (<Loading />) : (
-    <>
+    <div className='sm:max-w-160 mx-auto'>
       {(numImagesLoaded < numImages) && <Loading />}
-      <div className={`mt-5 ${(numImagesLoaded < numImages) ? 'hidden' : 'block'}`}>
-        <input className='peer/accountMenu fixed top-[calc(8vh+24px)] right-2 w-6 h-6 z-40 opacity-0' type='checkbox' />
-        <div className='invisible peer-checked/accountMenu:visible absolute top-[calc(8vh+24px)] right-2 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
+      <div className={`mt-5 relative ${(numImagesLoaded < numImages) ? 'hidden' : 'block'}`}>
+        <input className='peer/accountMenu absolute top-2 right-2 w-6 h-6 z-40 opacity-0' type='checkbox' />
+        <div className='invisible peer-checked/accountMenu:visible absolute top-2 right-2 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
           <button className='w-45 mt-1 px-2 text-left text-lg font-semibold' onClick={logoutAccount}>Log out</button>
           <button className='w-45 mt-1 pt-2 px-2 border-t-2 border-t-gray-300 text-left text-lg text-red-700 font-semibold' onClick={() => setShowConfirm(true)}>Delete Account</button>
         </div>
-        <svg className='invisible peer-checked/accountMenu:visible absolute top-[calc(8vh+32px)] right-4' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
+        <svg className='invisible peer-checked/accountMenu:visible absolute top-3 right-3' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
 
-        <div className='mx-2 flex justify-between items-center'>
+        <div className='mx-2 max-w-100 flex justify-between items-center'>
           <h1 className='text-2xl font-bold'>Account</h1>
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
         </div>
-        <p className='mx-2'>Email: {userData.email}</p>
+        <p className='mx-2 max-w-100'>Email: {userData.email}</p>
 
         {showConfirm && (
           <div className='absolute top-0 right-0 w-screen h-screen flex justify-center items-center z-50 bg-black/50'>
@@ -277,7 +277,7 @@ export default function ProfileCreatePage() {
           </div>
         )}
 
-        <div className='mt-5 mx-2 flex justify-between items-center'>
+        <div className='mt-5 mx-2 max-w-100 flex justify-between items-center'>
           <h1 className='text-2xl font-bold'>Profile</h1>
           {!showEditMode ? (
             <button className='' onClick={() => setShowEditMode(true)}> 
@@ -288,15 +288,15 @@ export default function ProfileCreatePage() {
           )}
         </div>
 
-        <button className='mt-1 mx-2 h-[calc(100vw-16px)] w-[calc(100vw-16px)]' onClick={() => setShowImagePopup(true)}>
-          <img className='w-[calc(100vw-16px)] rounded-md' 
+        <button className='mt-1 mx-2 w-[calc(100vw-16px)] max-w-100 relative' onClick={() => setShowImagePopup(true)}>
+          <img className='w-[calc(100vw-16px)] max-w-100 rounded-md' 
                src={`${getBackendUrl()}/profilePictureDb/${userData.imageId}.webp?cache=${imageCacheBuster}`} 
                onError={(e) => e.currentTarget.src = missingImage } 
                onLoad={() => setNumImagesLoaded(prev => prev + 1) } 
           />
-          {(numImagesLoaded === numImages) && 
-            <div className='relative -top-[calc(50vw-8px)] h-[calc(50vw-8px)] flex justify-center items-center rounded-t-[calc(50vw-8px)] rounded-b-md bg-black/60 text-white text-3xl font-semibold'>
-              <p className='w-[calc(70vw-8px)]'>
+          {(numImagesLoaded >= numImages) && 
+            <div className='absolute bottom-0 h-[calc(50vw-8px)] max-h-50 w-[calc(100vw-16px)] max-w-100 flex justify-center items-center rounded-t-[calc(50vw-8px)] rounded-b-md bg-black/60 text-white text-3xl font-semibold'>
+              <p className='w-[calc(70vw-8px)] max-w-75'>
                 Click to change picture.
               </p>
             </div>
@@ -304,8 +304,8 @@ export default function ProfileCreatePage() {
         </button>
 
         {showImagePopup && (
-          <div className='absolute top-0 right-0 w-screen h-screen flex justify-center items-center z-50 bg-black/50'>
-            <div className='bg-white w-[90vw] h-[17vh] p-5 rounded-lg'>
+          <div className='fixed top-0 right-0 w-screen h-screen flex justify-center items-center z-50 bg-black/50'>
+            <div className='bg-white w-[90vw] max-w-120 h-[17vh] p-5 rounded-lg'>
               <div className='flex justify-between'>
                 <h2 className='text-xl font-semibold'>Update Profile Picture</h2>
                 <button onClick={() => { setShowImagePopup(false); setImageError(null); } } >
@@ -326,11 +326,11 @@ export default function ProfileCreatePage() {
           </div>
         )}
 
-        <div className='-mt-20 mx-2 flex justify-between'>
+        <div className='mx-2 max-w-100 flex justify-between'>
           <p className='text-2xl font-semibold'>{`${userData.firstName} ${userData.lastName}`}</p>
           <p className='text-2xl font-semibold'>{differenceInYears(new Date(), parseISO(userData.birthDate))}</p>
         </div>
-        <div>
+        <div className='max-w-100'>
           {!showEditMode ? (
             <>
               <p className='mx-2 text-xl'>{bio}</p> 
@@ -397,6 +397,6 @@ export default function ProfileCreatePage() {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

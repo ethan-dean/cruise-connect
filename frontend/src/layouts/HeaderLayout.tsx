@@ -9,15 +9,17 @@ export default function HeaderLayout() {
   const { isProfileDone } = useContext(ProfileDoneContext);
 
   return (
-    <div className='w-screen h-screen'>
+    <div className='min-w-screen min-h-screen bg-gradient-to-b from-blue-50 to-white'>
       <header className='fixed top-0 w-screen z-[45] flex justify-between items-center h-[8%] bg-white shadow-md'>
         <div className = 'flex pl-4'>
-          <Link className='text-lg font-semibold' to='/'><img className='w-[30vw] rounded-md' src='/wordmark-logo-lightmode.webp'/></Link>
+          <Link className='text-lg font-semibold' to='/'>
+            <img className='w-30 rounded-md' src='/wordmark-logo-lightmode.webp'/>
+          </Link>
         </div>
-        <div className='flex justify-around pr-4'>
+        <div className='flex justify-around mr-5 sm:mr-10'>
           { isAuthenticated ?
               isProfileDone ? (<>
-                <Link className='text-lg font-semibold pr-5' to='/dashboard'>Dashboard</Link>
+                <Link className='text-lg font-semibold mr-5' to='/dashboard'>Dashboard</Link>
                 <Link className='text-lg font-semibold' to='/dashboard/profile'>Profile</Link>
               </>)
               :
@@ -26,7 +28,7 @@ export default function HeaderLayout() {
               </>)
             :
               (<>
-                <Link className='text-lg font-semibold pr-5' to='/login'>Login</Link>
+                <Link className='text-lg font-semibold mr-5' to='/login'>Login</Link>
                 <Link className='text-lg font-semibold' to='/register'>Register</Link>
               </>)
           }

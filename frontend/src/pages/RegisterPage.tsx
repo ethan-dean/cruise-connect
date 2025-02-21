@@ -189,6 +189,7 @@ export default function RegisterPage() {
           <input
             type="password"
             id="password"
+            autoComplete="new-password"
             className={`register-page__input ${passwordErrors.length > 0 ? 'register-page__input--error' : ''}`}
             value={password}
             onChange={(e) => handlePasswordChange(e.target.value)}

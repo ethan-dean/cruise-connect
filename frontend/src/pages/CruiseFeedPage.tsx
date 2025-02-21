@@ -90,46 +90,8 @@ export default function CruiseFeedPage() {
 
   return !userProfilesData ? <Loading/> : (
     <div className=''>
-      {(userProfilesData.length < 1) && (
-        <div className='mt-2'>
-          <h1 className='mt-4 w-[92vw] mx-auto text-xl font-semibold text-center'>No one else has joined this cruise yet.</h1>
-          <h1 className='mt-8 w-[92vw] mx-auto text-xl font-semibold text-center'>Be the first to invite others!</h1>
-          <p className='mt-2 w-[92vw] mx-auto text-lg text-center'>Share with the link below:</p>
-          <div
-            className="mt-2 w-[92vw] mx-auto bg-white rounded-2xl shadow-lg cursor-pointer hover:shadow-xl transition p-2 py-4 flex items-center gap-2"
-            onClick={handleShare}
-          >
-            <img
-              className="w-16 h-16 rounded-lg object-cover"
-              src="/letterform-logo.webp"
-            />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Share My Cruise!</h3>
-              <p className="text-sm text-gray-600">See who else is coming and invite your friends!</p>
-            </div>
-            <button
-              className="ml-auto bg-blue-500 text-white px-2 py-1 rounded-lg text-sm hover:bg-blue-600"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevents triggering main share event
-                handleSMSShare();
-              }}
-            >
-              <span className="text-3xl">📱</span> SMS
-            </button>
-            <button
-              className="ml-auto bg-blue-500 text-white px-2 py-1 rounded-lg text-sm hover:bg-blue-600"
-              onClick={(e) => {
-                e.stopPropagation(); // Prevents triggering main share event
-                handleShare();
-              }}
-            >
-              <span className="text-3xl">📋</span> Share
-            </button>
-          </div>
-        </div>
-      )}
-
       {numImagesLoaded < numImages && <Loading />}
+
       <div className={`${numImagesLoaded < numImages ? 'hidden' : 'block'}`}>
         {userProfilesData.map((u, index) => { return (
           <div className='mt-2' key={index}> 
@@ -170,12 +132,52 @@ export default function CruiseFeedPage() {
                 </p>
               )}
             </div>
-            {index < userProfilesData.length-1 && (
-              <hr className='w-[calc(100vw-16px)] mx-auto mt-2 bg-gray-100' />
-            )}
+            <hr className='w-[calc(100vw-16px)] mx-auto mt-2 bg-gray-100' />
           </div>
           )}
         )}
+      </div>
+
+      {(userProfilesData.length < 1) && (
+        <div className='mt-2'>
+          <h1 className='mt-4 w-[92vw] mx-auto text-xl font-semibold text-center'>No one else has joined this cruise yet.</h1>
+          <h1 className='mt-8 w-[92vw] mx-auto text-xl font-semibold text-center'>Be the first to invite others!</h1>
+        </div>
+      )}
+      
+      <div className={`mb-8 ${userProfilesData.length >= 1 ? 'mt-6' : 'mt-2'}`}>
+        <p className='mt-2 w-[92vw] mx-auto text-lg text-center'>Share with the link below:</p>
+        <div
+          className="mt-2 w-[92vw] max-w-100 mx-auto bg-white rounded-2xl shadow-lg cursor-pointer hover:shadow-xl transition p-2 py-4 flex items-center gap-2"
+          onClick={handleShare}
+        >
+          <img
+            className="w-16 h-16 rounded-lg object-cover"
+            src="/letterform-logo.webp"
+          />
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Share My Cruise!</h3>
+            <p className="text-sm text-gray-600">See who else is coming and invite your friends!</p>
+          </div>
+          <button
+            className="ml-auto bg-blue-500 text-white px-2 py-1 rounded-lg text-sm hover:bg-blue-600"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevents triggering main share event
+              handleSMSShare();
+            }}
+          >
+            <span className="text-3xl">📱</span> SMS
+          </button>
+          <button
+            className="ml-auto bg-blue-500 text-white px-2 py-1 rounded-lg text-sm hover:bg-blue-600"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevents triggering main share event
+              handleShare();
+            }}
+          >
+            <span className="text-3xl">📋</span> Share
+          </button>
+        </div>
       </div>
     </div>
   );
