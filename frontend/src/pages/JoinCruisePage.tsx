@@ -17,13 +17,18 @@ export default function JoinCruisePage() {
   const [shipId, setShipId] = useState<number>(-1);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
-  const [companyData, setCompanyData] = useState<{companyId: number, companyName: string}[]>([]);
-  const [shipData, setShipData] = useState<{shipId: number, shipName: string}[]>([]);
+  const [companyData, setCompanyData] = useState<{companyId: number, companyName: string}[] | null>(null);
+  const [shipData, setShipData] = useState<{shipId: number, shipName: string}[] | null>(null);
 
   const [showCompanies, setShowCompanies] = useState(true);
   const [showShips, setShowShips] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+
+  const [numCompanyImagesLoaded, setCompanyNumImagesLoaded] = useState<number>(0);
+  const [numCompanyImages, setCompanyNumImages] = useState<number>(1);
+  const [numShipImagesLoaded, setShipNumImagesLoaded] = useState<number>(0);
+  const [numShipImages, setShipNumImages] = useState<number>(1);
 
   const navigate = useNavigate();
 
@@ -36,6 +41,7 @@ export default function JoinCruisePage() {
       if (response.ok) {
         const data = await response.json();
         setCompanyData(data);
+        setCompanyNumImages(data.length);
       } else {
         const data = await response.json();
         console.log(data.message || 'Server connection error, try again later...');
@@ -61,6 +67,7 @@ export default function JoinCruisePage() {
       if (response.ok) {
         const data = await response.json();
         setShipData(data);
+        setShipNumImages(data.length);
       } else {
         const data = await response.json();
         console.log(data.message || 'Server connection error, try again later...');
@@ -101,36 +108,54 @@ export default function JoinCruisePage() {
       {showCompanies && (
         <div>
           <h2 className='mt-6 text-center text-xl font-semibold'>Who are you cruising with?</h2>
-          <div className='mt-4 w-[340px] mx-auto flex flex-wrap gap-5'>
-            {!companyData ? <Loading/> : companyData.map(c => (
-              <button 
-                key={c.companyId}
-                className='p-2 rounded-md shadow-md bg-white' 
-                onClick={() => { setCompanyName(c.companyName); getShipData(c.companyId); setShowCompanies(false); setShowShips(true); } }
-              > 
-                <img className='w-36 rounded-md' src={`/company-${c.companyId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
-                <p className='w-36 font-semibold'>{c.companyName}</p>
-              </button>
-            ))}
-          </div>
+          {!companyData ? <Loading/> : (
+            <>
+              {numCompanyImagesLoaded < numCompanyImages && <Loading />}
+              <div className={`mt-4 w-[340px] mx-auto flex flex-wrap gap-5 ${numCompanyImagesLoaded < numCompanyImages ? 'hidden' : 'block'}`}>
+                {companyData.map(c => (
+                  <button
+                    key={c.companyId}
+                    className='p-2 rounded-md shadow-md bg-white' 
+                    onClick={() => { setCompanyName(c.companyName); getShipData(c.companyId); setShowCompanies(false); setShowShips(true); } }
+                  > 
+                    <img className='w-36 rounded-md' 
+                         src={`/company-${c.companyId}.webp`} 
+                         onError={(e) => e.currentTarget.src = missingImage }
+                         onLoad={() => setCompanyNumImagesLoaded(prev => prev+1) }
+                    />
+                    <p className='w-36 font-semibold'>{c.companyName}</p>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {showShips && (
         <div>
           <h2 className='mt-6 text-center text-xl font-semibold'>What ship are you cruising on?</h2>
-          <div className='mt-4 w-[340px] mx-auto flex flex-wrap gap-5'>
-            {!shipData ? <Loading /> : shipData.map(s => (
-              <button
-                key={s.shipId}
-                className='p-2 flex flex-col justify-start items-start rounded-md shadow-md bg-white' 
-                onClick={() => { setShipId(s.shipId); setShipName(s.shipName); setShowShips(false); setShowCalendar(true); } }
-              >
-                <img className='w-36 rounded-md' src={`/ship-${s.shipId}.webp`} onError={(e) => { e.currentTarget.src = missingImage; }} />
-                <p className='w-36 font-semibold'>{s.shipName}</p>
-              </button>
-            ))}
-          </div>
+          {!shipData ? <Loading /> : (
+            <>
+              {numShipImagesLoaded < numShipImages && <Loading />}
+              <div className={`mt-4 w-[340px] mx-auto flex flex-wrap gap-5 ${numShipImagesLoaded < numShipImages ? 'hidden' : 'block'}`}>
+                {shipData.map(s => (
+                  <button
+                    key={s.shipId}
+                    className='p-2 flex flex-col justify-start items-start rounded-md shadow-md bg-white' 
+                    onClick={() => { setShipId(s.shipId); setShipName(s.shipName); setShowShips(false); setShowCalendar(true); } }
+                  >
+                    <img className='w-36 rounded-md' 
+                         src={`/ship-${s.shipId}.webp`}
+                         onError={(e) => e.currentTarget.src = missingImage }
+                         onLoad={() => setShipNumImagesLoaded(prev => prev + 1) }
+                    />
+                    <p className='w-36 font-semibold'>{s.shipName}</p>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
