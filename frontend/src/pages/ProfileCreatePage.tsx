@@ -379,7 +379,7 @@ export default function ProfileCreatePage() {
             <p className='text-2xl font-semibold'>{differenceInYears(new Date(), selectedDate!)}</p>
           </div>
           <p className='text-xl'>{bio}</p> 
-          <div className='-mx-1 flex flex-wrap'>
+          <div className='-mx-1 max-w-100 flex flex-wrap'>
             {socialSites.map((s, idx) => { 
               if (!!socialHandles[s]) {
                 return (

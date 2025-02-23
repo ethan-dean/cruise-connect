@@ -60,7 +60,7 @@ export default function CruiseFeedPage() {
     getJoinedCruisesData()
   }, []);
 
-  const shareUrl = "https://thecruiseconnect.com/join-cruise";
+  const shareUrl = "https://thecruiseconnect.com/";
   const shareText = `Join My Cruise on Cruise Connect! 🚢\nFind me on the ${location.state.shipName || 'ship'} on ${format(parseISO(location.state.departureDate), "MMMM do, yyyy")}!\n`;
 
   const handleShare = async () => {
@@ -107,29 +107,34 @@ export default function CruiseFeedPage() {
             <p className='mx-2 text-xl '>{`${u.bio}`}</p>
             <div className='mx-1 flex flex-wrap'>
               {u.instagram && (
-                <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
-                  {`Instagram: @${u.instagram}`}
-                </p>
+                <div className='m-1 w-fit flex border-4 border-solid border-[#c64f7b] rounded-full'>
+                  <img className='h-7 rounded-l-lg' src="/instagram.webp"/>
+                  <p className='pr-2 py-[2px]'>&nbsp;{`@${u.instagram}`}</p>
+                </div>
               )}
               {u.snapchat && (
-                <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
-                  {`Snapchat: @${u.snapchat}`}
-                </p>
+                <div className='m-1 w-fit flex border-4 border-solid border-[#fffd01] rounded-full'>
+                  <img className='h-7 rounded-l-lg' src="/snapchat.webp"/>
+                  <p className='pr-2 py-[2px]'>&nbsp;{`@${u.snapchat}`}</p>
+                </div>
               )}
               {u.tiktok && (
-                <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
-                  {`Tiktok: @${u.tiktok}`}
-                </p>
+                <div className='m-1 w-fit flex border-4 border-solid border-[#000000] rounded-full'>
+                  <img className='h-7 rounded-l-lg' src="/tiktok.webp"/>
+                  <p className='pr-2 py-[2px]'>&nbsp;{`@${u.tiktok}`}</p>
+                </div>
               )}
               {u.twitter && (
-                <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
-                  {`Twitter: @${u.twitter}`}
-                </p>
+                <div className='m-1 w-fit flex border-4 border-solid border-[#000000] rounded-full'>
+                  <img className='h-7 rounded-l-lg' src="/twitter.webp"/>
+                  <p className='pr-2 py-[2px]'>&nbsp;{`@${u.twitter}`}</p>
+                </div>
               )}
               {u.facebook && (
-                <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
-                  {`Facebook: @${u.facebook}`}
-                </p>
+                <div className='m-1 w-fit flex border-4 border-solid border-[#3b569d] rounded-full'>
+                  <img className='h-7 rounded-l-lg' src="/facebook.webp"/>
+                  <p className='pr-2 py-[2px]'>&nbsp;{`@${u.facebook}`}</p>
+                </div>
               )}
             </div>
             <hr className='w-[calc(100vw-16px)] max-w-100 mx-auto mt-2 bg-gray-100' />

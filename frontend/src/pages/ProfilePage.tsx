@@ -6,13 +6,19 @@ import heic2any from "heic2any";
 import { AuthContext } from "../contexts/AuthContext";
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
-import getTitleCase from "../utils/getTitleCase";
 import filterProfanity from "../utils/filterProfanity";
 import Loading from "../modules/loadingModule/Loading";
 import missingImage from "../assets/missing-image.jpg";
 
 
-const socialSites = [ 'instagram', 'snapchat', 'tiktok', 'twitter', 'facebook' ];
+const socialSites: string[] = [ 'instagram', 'snapchat', 'tiktok', 'twitter', 'facebook' ];
+const socialSitesColors: Record<string, string> = {
+  "instagram": "#c64f7b", 
+  "snapchat": "#fffd01",
+  "tiktok": "#000000",
+  "twitter": "#000000",
+  "facebook": "#3b569d"
+};
 
 interface userProfileType {
   firstName: string;
@@ -339,9 +345,10 @@ export default function ProfileCreatePage() {
                 {socialSites.map((s, idx) => { 
                   if (!!socialHandles[s]) {
                     return (
-                      <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full' key={idx}>
-                        {getTitleCase(s)}: @{socialHandles[s] || ''} 
-                      </p>
+                      <div className={`m-1 w-fit flex border-4 border-solid border-[${socialSitesColors[s]}] rounded-full`} key={idx}>
+                        <img className='h-7 rounded-l-lg' src={`/${s}.webp`}/>
+                        <p className='pr-2 py-[2px]'>&nbsp;@{socialHandles[s] || ''}</p>
+                      </div>
                     );
                   }
                   return null;
@@ -355,6 +362,7 @@ export default function ProfileCreatePage() {
                   <div className='text-xl'>
                     <textarea
                       className='w-full border-2 border-blue-400 rounded-md hover:border-blue-700'
+                      placeholder="Write your bio here..."
                       value={bio}
                       onChange={(e) => {
                         setBio(e.target.value);
@@ -366,17 +374,20 @@ export default function ProfileCreatePage() {
 
                   <div className=''>
                     {socialSites.map((s, idx) => (
-                      <div key={idx} className='mt-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full'>
-                        {getTitleCase(s)}: @
-                        <input
-                          className='border-2 border-blue-400 rounded-md hover:border-blue-700'
-                          type='text'
-                          value={socialHandles[s] || ''}
-                          onChange={(e) => { 
-                            handleSocialChange(s, e.target.value);
-                            setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
-                          }}
-                        />
+                      <div className={`m-1 w-fit flex border-4 border-solid border-[${socialSitesColors[s]}] rounded-full`} key={idx}>
+                        <img className='h-8 rounded-l-lg' src={`/${s}.webp`}/>
+                        <div className='pr-2 py-[2px] flex'>
+                          <p>&nbsp;@</p>
+                          <input
+                            className='border-2 border-blue-400 rounded-md hover:border-blue-700'
+                            type='text'
+                            value={socialHandles[s] || ''}
+                            onChange={(e) => { 
+                              handleSocialChange(s, e.target.value);
+                              setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
+                            }}
+                          />
+                        </div>
                         {socialErrors[s] && <p className='mt-1 text-sm text-red-700'>{socialErrors[s]}</p>}
                       </div>
                     ))}
