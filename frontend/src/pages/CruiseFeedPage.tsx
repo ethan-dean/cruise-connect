@@ -89,13 +89,13 @@ export default function CruiseFeedPage() {
   };
 
   return !userProfilesData ? <Loading/> : (
-    <div className=''>
+    <div className='max-w-100 mx-auto'>
       {numImagesLoaded < numImages && <Loading />}
 
       <div className={`${numImagesLoaded < numImages ? 'hidden' : 'block'}`}>
         {userProfilesData.map((u, index) => { return (
           <div className='mt-2' key={index}> 
-            <img className='mx-2 w-[calc(100vw-16px)] rounded-md' 
+            <img className='mx-2 w-[calc(100vw-16px)] max-w-100 rounded-md' 
                  src={`${getBackendUrl()}/profilePictureDb/${u.imageId}.webp`}
                  onError={(e) => e.currentTarget.src = missingImage } 
                  onLoad={() => setNumImagesLoaded(prev => prev + 1) }
@@ -132,7 +132,7 @@ export default function CruiseFeedPage() {
                 </p>
               )}
             </div>
-            <hr className='w-[calc(100vw-16px)] mx-auto mt-2 bg-gray-100' />
+            <hr className='w-[calc(100vw-16px)] max-w-100 mx-auto mt-2 bg-gray-100' />
           </div>
           )}
         )}
@@ -140,13 +140,13 @@ export default function CruiseFeedPage() {
 
       {(userProfilesData.length < 1) && (
         <div className='mt-2'>
-          <h1 className='mt-4 w-[92vw] mx-auto text-xl font-semibold text-center'>No one else has joined this cruise yet.</h1>
-          <h1 className='mt-8 w-[92vw] mx-auto text-xl font-semibold text-center'>Be the first to invite others!</h1>
+          <h1 className='mt-4 w-[92vw] max-w-100 mx-auto text-xl font-semibold text-center'>No one else has joined this cruise yet.</h1>
+          <h1 className='mt-8 w-[92vw] max-w-100 mx-auto text-xl font-semibold text-center'>Be the first to invite others!</h1>
         </div>
       )}
       
       <div className={`mb-8 ${userProfilesData.length >= 1 ? 'mt-6' : 'mt-2'}`}>
-        <p className='mt-2 w-[92vw] mx-auto text-lg text-center'>Share with the link below:</p>
+        <p className='mt-2 w-[92vw] max-w-100 mx-auto text-lg text-center'>Share with the link below:</p>
         <div
           className="mt-2 w-[92vw] max-w-100 mx-auto bg-white rounded-2xl shadow-lg cursor-pointer hover:shadow-xl transition p-2 py-4 flex items-center gap-2"
           onClick={handleShare}

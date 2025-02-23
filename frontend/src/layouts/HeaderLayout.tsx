@@ -19,8 +19,8 @@ export default function HeaderLayout() {
         <div className='flex justify-around mr-5 sm:mr-10'>
           { isAuthenticated ?
               isProfileDone ? (<>
-                <Link className='text-lg font-semibold mr-5' to='/dashboard'>Dashboard</Link>
-                <Link className='text-lg font-semibold' to='/dashboard/profile'>Profile</Link>
+                <Link className='text-lg font-semibold mr-5 px-[1px] hover:font-bold hover:px-0' to='/dashboard'>Dashboard</Link>
+                <Link className='text-lg font-semibold px-[1px] hover:font-bold hover:px-0' to='/dashboard/profile'>Profile</Link>
               </>)
               :
               (<>

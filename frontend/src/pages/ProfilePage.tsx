@@ -223,7 +223,6 @@ export default function ProfileCreatePage() {
         navigate('/');
       } else {
         const data = await response.json();
-
         console.log(data.message || 'Server connection error, try again later...');
       }
     } catch (error) {
@@ -251,19 +250,20 @@ export default function ProfileCreatePage() {
   };
 
   return !userData ? (<Loading />) : (
-    <div className='sm:max-w-160 mx-auto'>
+    <div className='max-w-160 mx-auto'>
       {(numImagesLoaded < numImages) && <Loading />}
       <div className={`mt-5 relative ${(numImagesLoaded < numImages) ? 'hidden' : 'block'}`}>
-        <input className='peer/accountMenu absolute top-2 right-2 w-6 h-6 z-40 opacity-0' type='checkbox' />
-        <div className='invisible peer-checked/accountMenu:visible absolute top-2 right-2 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
-          <button className='w-45 mt-1 px-2 text-left text-lg font-semibold' onClick={logoutAccount}>Log out</button>
-          <button className='w-45 mt-1 pt-2 px-2 border-t-2 border-t-gray-300 text-left text-lg text-red-700 font-semibold' onClick={() => setShowConfirm(true)}>Delete Account</button>
-        </div>
-        <svg className='invisible peer-checked/accountMenu:visible absolute top-3 right-3' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
-
-        <div className='mx-2 max-w-100 flex justify-between items-center'>
+        <div className='mx-2 max-w-100 flex justify-between items-center relative'>
           <h1 className='text-2xl font-bold'>Account</h1>
-          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
+
+          {/* Menu for account settings */}
+          <input className='peer/accountMenu absolute top-1 right-0 w-6 h-6 z-40 opacity-0' type='checkbox' />
+          <svg className='peer-hover/accountMenu:scale-120 peer-hover/accountMenu:fill-gray-500' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
+          <div className='invisible peer-checked/accountMenu:visible absolute top-0 right-0 w-50 flex flex-col items-start bg-white p-2 border-2 border-gray-300 rounded-md'>
+            <button className='w-45 mt-1 px-2 text-left text-lg font-semibold hover:font-extrabold hover:px-[7px]' onClick={logoutAccount}>Log out</button>
+            <button className='w-45 mt-1 pt-2 px-2 border-t-2 border-t-gray-300 text-left text-lg text-red-700 font-semibold hover:font-extrabold hover:px-[7px]' onClick={() => setShowConfirm(true)}>Delete Account</button>
+          </div>
+          <svg className='invisible peer-checked/accountMenu:visible absolute top-1 right-0 peer-hover/accountMenu:scale-110 peer-hover/accountMenu:fill-red-700' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
         </div>
         <p className='mx-2 max-w-100'>Email: {userData.email}</p>
 
@@ -279,12 +279,13 @@ export default function ProfileCreatePage() {
 
         <div className='mt-5 mx-2 max-w-100 flex justify-between items-center'>
           <h1 className='text-2xl font-bold'>Profile</h1>
-          {!showEditMode ? (
+          {!showEditMode && (
             <button className='' onClick={() => setShowEditMode(true)}> 
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+              <div className='flex group hover:scale-120 '>
+                <p className='mr-1 group-hover:text-gray-500'>Edit </p>
+                <svg className='group-hover:fill-gray-500' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg>
+              </div>
             </button>
-          ) : (
-            <span/>
           )}
         </div>
 

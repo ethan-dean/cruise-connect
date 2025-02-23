@@ -115,7 +115,7 @@ export default function JoinCruisePage() {
                 {companyData.map(c => (
                   <button
                     key={c.companyId}
-                    className='p-2 rounded-md shadow-md bg-white' 
+                    className='p-2 rounded-md shadow-md bg-white cursor-pointer hover:shadow-xl' 
                     onClick={() => { setCompanyName(c.companyName); getShipData(c.companyId); setShowCompanies(false); setShowShips(true); } }
                   > 
                     <img className='w-36 rounded-md' 
@@ -142,7 +142,7 @@ export default function JoinCruisePage() {
                 {shipData.map(s => (
                   <button
                     key={s.shipId}
-                    className='p-2 flex flex-col justify-start items-start rounded-md shadow-md bg-white' 
+                    className='p-2 rounded-md shadow-md bg-white cursor-pointer hover:shadow-2xl' 
                     onClick={() => { setShipId(s.shipId); setShipName(s.shipName); setShowShips(false); setShowCalendar(true); } }
                   >
                     <img className='w-36 rounded-md' 
@@ -169,7 +169,7 @@ export default function JoinCruisePage() {
             />
           </LocalizationProvider>
           <button
-            className='w-30 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+            className='mt-4 w-fit px-4 py-2 bg-blue-800 hover:bg-blue-700 active:bg-blue-600 cursor-pointer font-semibold text-white rounded-full text-2xl'
             onClick={() => { setShowCalendar(false); setShowSummary(true); } }
           >
             Find Cruise
@@ -187,7 +187,7 @@ export default function JoinCruisePage() {
             <p>{format((selectedDate!), "MMMM do, yyyy")}</p>
           </div>
           <button
-            className='mt-5 w-30 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+            className='mt-4 w-fit px-4 py-2 bg-blue-800 hover:bg-blue-700 active:bg-blue-600 cursor-pointer font-semibold text-white rounded-full text-2xl'
             onClick={() => joinCruise() }
           >
             Join Cruise

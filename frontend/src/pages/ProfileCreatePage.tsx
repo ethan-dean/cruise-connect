@@ -201,7 +201,7 @@ export default function ProfileCreatePage() {
   }
 
   return (
-    <div className='mx-2'>
+    <div className='mx-2 max-w-160 sm:mx-auto'>
       <h1 className='mt-5 text-center text-2xl font-bold'>Let's Create your Profile!</h1>
 
       {showCalendar && (
@@ -349,7 +349,7 @@ export default function ProfileCreatePage() {
           {previewImage && (
             <>
               <h3 className='text-xl font-semibold'>Profile Picture Preview</h3>
-              <img className='w-[calc(100vw-16px)] rounded-md' src={previewImage} alt="Image Preview" />
+              <img className='w-[calc(100vw-16px)] max-w-100 rounded-md' src={previewImage} alt="Image Preview" />
             </>
           )}
 
@@ -373,7 +373,7 @@ export default function ProfileCreatePage() {
 
       {showSummary && (!(firstName && lastName) ? (<Loading />) : (
         <div>
-          {previewImage && <img className='w-[calc(100vw-16px)] rounded-md' src={previewImage} alt="Image Preview" /> }
+          {previewImage && <img className='w-[calc(100vw-16px)] max-w-100 rounded-md' src={previewImage} alt="Image Preview" /> }
           <div className='flex justify-between'>
             <p className='text-2xl font-semibold'>{`${firstName} ${lastName}`}</p>
             <p className='text-2xl font-semibold'>{differenceInYears(new Date(), selectedDate!)}</p>

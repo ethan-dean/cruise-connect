@@ -62,50 +62,58 @@ export default function DashboardPage() {
   return  (
     <div className='w-screen mt-5 flex flex-col items-center'>
       <Link 
-        className='p-2 text-lg font-semibold text-white bg-blue-400 border-none rounded-full' 
+        className='mt-4 w-fit px-4 py-2 bg-blue-800 hover:bg-blue-700 active:bg-blue-600 cursor-pointer font-semibold text-white rounded-full text-2xl'
         to={'/dashboard/join-cruise'}
       > 
         Join Cruise 
       </Link>
 
-      <p className='mt-10 text-xl font-semibold'>My Cruises</p>
-      <div className='mt-5 w-[340px] mx-auto flex flex-wrap gap-5'>
-        {(!joinedCruisesData) ? <Loading/> : joinedCruisesData.map(c => { 
-          return (
-            <>
-              {(numImagesLoaded < numImages) && <Loading />}
-              <div className={`${numImagesLoaded < numImages ? 'hidden' : 'block'} relative rounded-md shadow-md bg-white`} key={c.cruiseId}>
-                {/* Clickable Card */}
-                <Link 
-                  className='block p-2 rounded-md'
-                  to='/dashboard/cruise-feed' 
-                  state={{ cruiseId: c.cruiseId, departureDate: c.departureDate, shipName: c.shipName }}
-                > 
-                  <img className='w-36 rounded-md' 
-                       src={`/ship-${c.shipId}.webp`} 
-                       onError={(e) => e.currentTarget.src = missingImage } 
-                       onLoad={() => setNumImagesLoaded(prev => prev + 1) }
-                  />
-                        
-                  <div className='flex'>
-                    <p className='w-30 font-semibold'>{c.shipName}</p>
-                    <svg className='mt-[2px] w-6' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/></svg>
-                  </div>
-                  <p className='w-36'>{format(parseISO(c.departureDate), "MMMM do, yyyy")}</p>
-                </Link>
+      <p className='mt-10 text-3xl font-semibold'>My Cruises</p>
+      <div className=''>
+        {(!joinedCruisesData) ? <Loading/> : (
+          <>
+            {(numImagesLoaded < numImages) && <Loading />}
+            <div className={`${numImagesLoaded < numImages ? 'hidden' : 'block'} mt-5 w-[340px] md:w-[520px] mx-auto flex flex-wrap gap-5 justify-center`} >
+              {joinedCruisesData.map(c => 
+                <div className="relative rounded-md shadow-md bg-white hover:shadow-xl" key={c.cruiseId}>
+                  {/* Clickable Card */}
+                  <Link 
+                    className="block p-2 rounded-md"
+                    to="/dashboard/cruise-feed" 
+                    state={{ cruiseId: c.cruiseId, departureDate: c.departureDate, shipName: c.shipName }}
+                  > 
+                    <img className="w-36 rounded-md" 
+                         src={`/ship-${c.shipId}.webp`} 
+                         onError={(e) => e.currentTarget.src = missingImage } 
+                         onLoad={() => setNumImagesLoaded(prev => prev + 1)}
+                    />
+                    <div className="flex relative">
+                      <p className="w-30 font-semibold">{c.shipName}</p>
 
-                {/* Menu (outside the Link) */}
-                <div className="absolute top-2 right-2">
-                  <input id={`menuToggle-${c.cruiseId}`} className='peer/accountMenu absolute top-37 right-0 w-6 h-6 z-40 opacity-0' type='checkbox' />
-                  <div className='invisible peer-checked/accountMenu:visible absolute z-30 top-35 -right-1 mt-2 w-38 bg-white border-2 border-gray-300 p-2 rounded-md shadow-lg'>
-                    <button className='w-35 px-2 text-left text-lg text-red-700 font-semibold' onClick={() => leaveCruise(c.cruiseId)}>Leave</button>
+                      {/* Menu (in card)*/}
+                      <input id={`menuToggle-${c.cruiseId}`} className="peer absolute top-0 right-0 w-6 h-6 z-40 opacity-0 cursor-pointer" type="checkbox" onClick={e => e.stopPropagation()}/>
+                      <svg className="mt-[2px] w-6 peer-hover:scale-120 peer-hover:fill-gray-500" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000">
+                        <path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/>
+                      </svg>
+
+                      <div className="invisible peer-checked:visible absolute z-30 -top-2 -right-1 mt-2 w-38 bg-white border-2 border-gray-300 p-2 rounded-md shadow-lg">
+                        <button className="w-30 px-2 text-left text-lg text-red-700 font-semibold cursor-pointer hover:font-extrabold hover:px-[7px]" onClick={(e) => { leaveCruise(c.cruiseId); e.stopPropagation(); }}>Leave</button>
+                      </div>
+                      <svg className="invisible peer-checked:visible absolute z-30 top-0 right-0 peer-hover:scale-110 peer-hover:fill-red-700" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000">
+                        <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
+                      </svg>
+                    </div>
+
+                    <p className="w-36">{format(parseISO(c.departureDate), "MMMM do, yyyy")}</p>
+                  </Link>
+
+                  <div className="absolute top-2 right-2">
                   </div>
-                  <svg className='invisible peer-checked/accountMenu:visible absolute z-30 top-37 right-0' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
                 </div>
-              </div>
-            </>
-          );
-        })}
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

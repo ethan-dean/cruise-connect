@@ -29,7 +29,7 @@ export default function HomePage() {
             </p>
             
             <Link to="/register">
-              <button className="w-full md:w-auto px-4 py-2 bg-blue-800 hover:bg-blue-700 font-semibold text-white rounded-md text-2xl">
+              <button className="w-full md:w-auto px-4 py-2 bg-blue-800 hover:bg-blue-700 active:bg-blue-600 cursor-pointer font-semibold text-white rounded-full text-2xl">
                 Join Now
               </button>
             </Link>
