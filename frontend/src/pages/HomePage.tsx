@@ -1,7 +1,15 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { Ship, Users, MapPin, Calendar } from 'lucide-react';
 
+import Loading from '../modules/loadingModule/Loading';
+import missingImage from '../assets/missing-image.jpg';
+
+
 export default function HomePage() {
+  const [numGalleryImagesLoaded, setNumGalleryImagesLoaded] = useState<number>(0);
+  const galleryImageIds: number[] = [];
+
   const features = [
     { icon: Ship, title: "Find Your Ship", text: "Connect with passengers on your specific cruise line and sailing date" },
     { icon: Users, title: "Meet New Friends", text: "Match with travelers who share your interests and excursion plans" },
@@ -15,9 +23,9 @@ export default function HomePage() {
         {/* Hero Section */}
         <div className="flex flex-col md:flex-row justify-center items-center gap-8">
           <img 
-            className="w-full bg-blue-800 max-w-sm md:max-w-md rounded-xl shadow-xl" 
+            className='w-full bg-blue-800 max-w-sm md:max-w-md rounded-xl shadow-xl'
             src="/combo-logo.webp" 
-            alt="CruiseConnect"
+            alt="Cruise Connect"
           />
           
           <div className="max-w-lg text-center md:text-left">
@@ -53,12 +61,18 @@ export default function HomePage() {
         <div className="mt-16 md:mt-24">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">Memories Made at Sea</h2>
           <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4">
-            {[60, 40, 30, 30, 40].map((height, i) => (
-              <div 
-                key={i}
-                className={`break-inside-avoid w-full h-${height} bg-blue-400 rounded-lg shadow-lg mb-4`}
-              />
-            ))}
+            {numGalleryImagesLoaded < galleryImageIds.length && <Loading />}
+            <div className={`${numGalleryImagesLoaded < galleryImageIds.length ? 'hidden' : 'block'}`}>
+              {galleryImageIds.map((id, i) => (
+                <img 
+                  key={i}
+                  className={`break-inside-avoid min-h-20 w-full bg-blue-400 rounded-lg shadow-lg mb-4`}
+                  src={`/home-gallery-${id}.webp`}
+                  onLoad={() => setNumGalleryImagesLoaded(prev => prev + 1)}
+                  onError={(e) => e.currentTarget.src = missingImage } 
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
