@@ -24,12 +24,12 @@ export default function HeaderLayout() {
               </>)
               :
               (<>
-                <Link className='text-lg font-semibold' to='/dashboard/profile'>Profile</Link>
+                <Link className='text-lg font-semibold px-[1px] hover:font-bold hover:px-0' to='/dashboard/profile'>Profile</Link>
               </>)
             :
               (<>
-                <Link className='text-lg font-semibold mr-5' to='/login'>Login</Link>
-                <Link className='text-lg font-semibold' to='/register'>Register</Link>
+                <Link className='text-lg font-semibold mr-5 px-[1px] hover:font-bold hover:px-0' to='/login'>Login</Link>
+                <Link className='text-lg font-semibold px-[1px] hover:font-bold hover:px-0' to='/register'>Register</Link>
               </>)
           }
         </div>
