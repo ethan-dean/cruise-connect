@@ -503,8 +503,10 @@ usersRouter.post('/is-profile-done', authenticateToken, async (req: any, res: an
 
   // Get user from the database.
   const [ getUserErr, getUserResult ] = await getUserFromId(userId);
-  const accountExists: boolean = !getUserErr && getUserResult;
-  if (respondIf(!accountExists, res, 500, 'Server error, try again later...', 'Failed getUserFromId ' + getUserErr)) return;
+  const serverError: boolean = !!getUserErr;
+  if (respondIf(serverError, res, 500, 'Server error, try again later...', 'Failed getUserFromId, error: ' + getUserErr)) return;
+  const accountDoesNotExist: boolean = !getUserErr && !getUserResult;
+  if (respondIf(accountDoesNotExist, res, 400, 'Database issue, try again later...', 'ACCOUNT_DOES_NOT_EXIST')) return;
 
   // If user profile has already been verified finished just return true.
   if (getUserResult.profileDone) {

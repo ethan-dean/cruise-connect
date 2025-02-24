@@ -37,7 +37,27 @@ export const ProfileDoneProvider: React.FC<{ children: ReactNode }> = ({ childre
         setIsProfileDone(data.profileDone);
       } else {
         const data = await response.json();
+        // If a token is expired the user needs to be logged out
         if (data.error === 'NO_REFRESH_TOKEN' || data.error === 'INVALID_REFRESH_TOKEN') {
+          try {
+            const response = await fetch(`${getBackendUrl()}/api/v1/users/logout`, {
+              method: 'POST',
+              credentials: 'include'
+            });
+
+            if (response.ok) {
+              logout();
+            } else {
+              const data = await response.json();
+              logout();
+              console.log(data.message || 'Server connection error, try again later...');
+            }
+          } catch (error) {
+            console.log('Server connection error, try again later...');
+          }
+        }
+        // If the user deletes their account on another device, they need to be signed out
+        else if (data.error === 'ACCOUNT_DOES_NOT_EXIST') {
           try {
             const response = await fetch(`${getBackendUrl()}/api/v1/users/logout`, {
               method: 'POST',

@@ -23,7 +23,7 @@ export default function HomePage() {
         {/* Hero Section */}
         <div className="flex flex-col md:flex-row justify-center items-center gap-8">
           <img 
-            className='w-full bg-blue-800 max-w-sm md:max-w-md rounded-xl shadow-xl'
+            className='w-full aspect-square bg-blue-800 max-w-sm md:max-w-md rounded-xl shadow-xl'
             src="/combo-logo.webp" 
             alt="Cruise Connect"
           />
