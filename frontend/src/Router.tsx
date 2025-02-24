@@ -17,6 +17,7 @@ import JoinCruisePage from './pages/JoinCruisePage'
 import CruiseFeedPage from './pages/CruiseFeedPage'
 import ProfilePage from './pages/ProfilePage'
 import NotFoundPage from './pages/NotFoundPage'
+import ErrorPage from "./pages/ErrorPage";
 
 // CSS Imports
 import './index.css'
@@ -27,6 +28,7 @@ export default function createRouter() {
       {
         path: '/',
         element: <HeaderLayout />,
+        errorElement: <ErrorPage />,
         children: [
           { path: '', element: <HomePage /> },
           { path: 'login', element: <LoginPage /> },

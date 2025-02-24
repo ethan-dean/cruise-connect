@@ -142,7 +142,7 @@ export default function JoinCruisePage() {
                 {shipData.map(s => (
                   <button
                     key={s.shipId}
-                    className='p-2 rounded-md shadow-md bg-white cursor-pointer hover:shadow-2xl' 
+                    className='p-2 flex flex-col justify-start rounded-md shadow-md bg-white cursor-pointer hover:shadow-2xl' 
                     onClick={() => { setShipId(s.shipId); setShipName(s.shipName); setShowShips(false); setShowCalendar(true); } }
                   >
                     <img className='w-36 rounded-md' 
