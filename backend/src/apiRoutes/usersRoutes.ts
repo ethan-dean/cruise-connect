@@ -411,8 +411,8 @@ usersRouter.post('/update-user-profile', authenticateToken, async (req: any, res
   const errors: string[] = [];
   Object.entries(requestChanges).forEach(([key, value]) => {
     if (typeof(value) === "string") {
-      if (value.length < 1) errors.concat(`<${key}> field cannot be empty`);
-      if (filterProfanity(value) !== value) errors.concat(`<${key}> field cannot contain profanity`);
+      if (value.length < 1) errors.push(`<${key}> field cannot be empty`);
+      if (filterProfanity(value) !== value) errors.push(`<${key}> field cannot contain profanity`);
     }
   });
   if (respondIf(errors.length > 0, res, 400, '', errors.join('\n'))) return;

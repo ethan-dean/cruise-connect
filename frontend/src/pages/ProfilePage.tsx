@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import heic2any from "heic2any";
 
 import { AuthContext } from "../contexts/AuthContext";
+import { ProfileDoneContext } from "../contexts/ProfileDoneContext";
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import filterProfanity from "../utils/filterProfanity";
@@ -55,6 +56,7 @@ export default function ProfileCreatePage() {
 
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
+  const { setIsProfileDone } = useContext(ProfileDoneContext);
 
   const getUserProfileData = async () => {
     try {
@@ -226,6 +228,7 @@ export default function ProfileCreatePage() {
 
       if (response.ok) {
         logout();
+        setIsProfileDone(null);
         navigate('/');
       } else {
         const data = await response.json();
@@ -245,6 +248,7 @@ export default function ProfileCreatePage() {
 
       if (response.ok) {
         logout();
+        setIsProfileDone(null);
         navigate('/');
       } else {
         const data = await response.json();
@@ -319,7 +323,7 @@ export default function ProfileCreatePage() {
                   <svg className='' xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>
                 </button>
               </div>
-              <label className='relative top-[3vh] w-40 py-1.5 px-2.5 bg-blue-400 rounded-full text-lg text-white font-semibold' htmlFor="pictureUpload">Choose New Picture</label>
+              <label className='relative top-[3vh] w-40 py-1.5 px-2.5 bg-blue-800 rounded-full text-lg text-white font-semibold' htmlFor="pictureUpload">Choose New Picture</label>
               <input className='hidden' id='pictureUpload' type="file" accept="image/*" onChange={e => { setImageError(null); handleFileChange(e); } } />
               {imageError && <p className='mt-9 ml-1 text-sm text-red-700'>{imageError}</p>}
 
@@ -374,21 +378,23 @@ export default function ProfileCreatePage() {
 
                   <div className=''>
                     {socialSites.map((s, idx) => (
-                      <div className={`m-1 w-fit flex border-4 border-solid border-[${socialSitesColors[s]}] rounded-full`} key={idx}>
-                        <img className='h-8 rounded-l-lg' src={`/${s}.webp`}/>
-                        <div className='pr-2 py-[2px] flex'>
-                          <p>&nbsp;@</p>
-                          <input
-                            className='border-2 border-blue-400 rounded-md hover:border-blue-700'
-                            type='text'
-                            value={socialHandles[s] || ''}
-                            onChange={(e) => { 
-                              handleSocialChange(s, e.target.value);
-                              setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
-                            }}
-                          />
+                      <div className='flex flex-col justify-center items-center'>
+                        <div className={`m-1 w-fit flex border-4 border-solid border-[${socialSitesColors[s]}] rounded-full`} key={idx}>
+                          <img className='h-8 rounded-l-lg' src={`/${s}.webp`}/>
+                          <div className='pr-2 py-[2px] flex'>
+                            <p>&nbsp;@</p>
+                            <input
+                              className='border-2 border-blue-400 rounded-md w-42 hover:border-blue-700'
+                              type='text'
+                              value={socialHandles[s] || ''}
+                              onChange={(e) => { 
+                                handleSocialChange(s, e.target.value);
+                                setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
+                              }}
+                            />
+                          </div>
                         </div>
-                        {socialErrors[s] && <p className='mt-1 text-sm text-red-700'>{socialErrors[s]}</p>}
+                        {socialErrors[s] && <p className='mb-2 text-sm text-red-700'>{socialErrors[s]}</p>}
                       </div>
                     ))}
                   </div>
@@ -396,8 +402,9 @@ export default function ProfileCreatePage() {
 
                 <div className='w-[calc(20vw)]'>
                   <button
-                    className='mx-2 py-1 px-2 bg-blue-400 rounded-full text-lg text-white font-semibold' 
+                    className='mx-2 py-1 px-2 bg-blue-800 disabled:bg-gray-300 rounded-full text-lg text-white font-semibold' 
                     onClick={() => { updateProfile(); setShowEditMode(false); } }
+                    disabled={socialSites.some(s => !!socialErrors[s])}
                   >
                     Save
                   </button>

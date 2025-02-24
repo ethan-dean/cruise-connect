@@ -6,7 +6,6 @@ import { differenceInYears, isFuture, isValid } from "date-fns";
 import heic2any from "heic2any";
 
 import { ProfileDoneContext } from '../contexts/ProfileDoneContext';
-import getTitleCase from "../utils/getTitleCase";
 import fetchWithAuth from "../utils/fetchWithAuth";
 import getBackendUrl from "../utils/getBackendUrl";
 import filterProfanity from "../utils/filterProfanity";
@@ -14,6 +13,13 @@ import Loading from "../modules/loadingModule/Loading";
 
 
 const socialSites = [ 'instagram', 'snapchat', 'tiktok', 'twitter', 'facebook' ];
+const socialSitesColors: Record<string, string> = {
+  "instagram": "#c64f7b", 
+  "snapchat": "#fffd01",
+  "tiktok": "#000000",
+  "twitter": "#000000",
+  "facebook": "#3b569d"
+};
 
 export default function ProfileCreatePage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -238,13 +244,13 @@ export default function ProfileCreatePage() {
 
           <div className='mt-4 flex justify-around gap-10'>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
               disabled={true}
             >
               Previous
             </button>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400'
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400'
               onClick={() => { setShowCalendar(false); setShowBio(true); } }
               disabled={!!calendarError || !selectedDate}
             >
@@ -272,13 +278,13 @@ export default function ProfileCreatePage() {
 
           <div className='mt-4 flex justify-around gap-10'>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white' 
               onClick={() => { setShowBio(false); setShowCalendar(true); } }
             >
               Previous
             </button>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
               onClick={() => { setShowBio(false); setShowHandles(true); } }
               disabled={!!bioError || !bio}
             >
@@ -289,41 +295,40 @@ export default function ProfileCreatePage() {
       )}
 
       {showHandles && (
-        <div className='mt-5 flex flex-col items-center justify-center'>
-          <div className='w-80'>
+        <div className='mt-5 flex flex-col items-center justify-start'>
+          <div className='w-60'>
             <h2 className='text-lg font-semibold'>Add Social Handles:</h2>
             {socialSites.map((s, idx) => (
-              <div
-                key={idx}
-                className='mt-1 flex'
-              >
-                <p className='w-25 text-lg'>{getTitleCase(s)}:</p>
-                <p className='w-5 text-end'>@</p>
-                <div className='flex flex-col justify-start'>
-                  <input
-                    className='w-50 h-[3vh] p-1 border-1 border-gray-400 rounded-sm'
-                    type='text'
-                    value={socialHandles[s] || ''}
-                    onChange={(e) => { 
-                      handleSocialChange(s, e.target.value);
-                      setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
-                    }}
-                  />
-                  {socialErrors[s] && <p className='mt-1 text-sm text-red-700'>{socialErrors[s]}</p>}
+              <div className='flex flex-col justify-center items-center'>
+                <div className={`m-1 w-fit flex border-4 border-solid border-[${socialSitesColors[s]}] rounded-full`} key={idx}>
+                  <img className='h-8 rounded-l-lg' src={`/${s}.webp`}/>
+                  <div className='pr-2 py-[2px] flex'>
+                    <p>&nbsp;@</p>
+                    <input
+                      className='border-2 border-blue-400 rounded-md w-42 hover:border-blue-700'
+                      type='text'
+                      value={socialHandles[s] || ''}
+                      onChange={(e) => { 
+                        handleSocialChange(s, e.target.value);
+                        setSocialErrors((prev) => ({ ...prev, [s]: validateHandle(e.target.value) }));
+                      }}
+                    />
+                  </div>
                 </div>
+                {socialErrors[s] && <p className='mb-2 text-sm text-red-700'>{socialErrors[s]}</p>}
               </div>
             ))}
           </div>
 
           <div className='mt-4 flex justify-around gap-10'>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white' 
               onClick={() => { setShowHandles(false); setShowBio(true); } }
             >
               Previous
             </button>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
               onClick={() => { setShowHandles(false); setShowPictureSelector(true); } }
               disabled={Object.values(socialErrors).some(e => !!e) ||
                         Object.values(socialHandles).every(h => !h || h.length === 0) ||
@@ -339,7 +344,7 @@ export default function ProfileCreatePage() {
         <div className='mt-5'>
           <div className='h-[15vh]'>
             <h2 className='text-xl font-semibold w-60'>Upload Profile Picture:</h2>
-            <label className='relative top-[3vh] w-40 py-1.5 px-2.5 bg-blue-400 rounded-full text-lg text-white font-semibold' htmlFor="pictureUpload">
+            <label className='relative top-[3vh] w-40 py-1.5 px-2.5 bg-blue-800 rounded-full text-lg text-white font-semibold' htmlFor="pictureUpload">
               Choose Picture
             </label>
             <input className='hidden' id='pictureUpload' type="file" accept="image/*" onChange={e => { setImageError(null); handleFileChange(e); } } />
@@ -355,13 +360,13 @@ export default function ProfileCreatePage() {
 
           <div className='mt-4 mx-auto w-60 flex justify-around gap-10'>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white' 
               onClick={() => { setShowPictureSelector(false); setShowHandles(true); } }
             >
               Previous
             </button>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
               onClick={() => { setShowPictureSelector(false); setShowSummary(true); } }
               disabled={!!imageError || !previewImage}
             >
@@ -383,9 +388,10 @@ export default function ProfileCreatePage() {
             {socialSites.map((s, idx) => { 
               if (!!socialHandles[s]) {
                 return (
-                  <p className='m-1 w-fit px-[6px] py-[2px] border-2 border-solid border-black rounded-full' key={idx}>
-                    {getTitleCase(s)}: @{socialHandles[s] || ''} 
-                  </p>
+                  <div className={`m-1 w-fit flex border-4 border-solid border-[${socialSitesColors[s]}] rounded-full`} key={idx}>
+                    <img className='h-7 rounded-l-lg' src={`/${s}.webp`}/>
+                    <p className='pr-2 py-[2px]'>&nbsp;@{socialHandles[s] || ''}</p>
+                  </div>
                 );
               }
               return null;
@@ -394,13 +400,13 @@ export default function ProfileCreatePage() {
 
           <div className='mt-4 flex justify-around gap-10'>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white' 
               onClick={() => { setShowSummary(false); setShowPictureSelector(true); } }
             >
               Previous
             </button>
             <button
-              className='w-25 px-3 py-1.5 bg-blue-400 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
+              className='w-25 px-3 py-1.5 bg-blue-800 rounded-md text-lg font-semibold text-white disabled:text-gray-200 disabled:bg-gray-400' 
               onClick={() => updateProfile() }
             >
               Save

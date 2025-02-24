@@ -8,12 +8,14 @@ import { AuthContext } from './AuthContext';
 // Define the ProfileDoneContext type
 interface ProfileDoneContextType {
   isProfileDone: boolean | null;
+  setIsProfileDone: (value: boolean | null) => void;
   checkIfProfileDone: () => void;
 }
 
 // Create ProfileDoneContext with default values
 export const ProfileDoneContext = createContext<ProfileDoneContextType>({
   isProfileDone: null,
+  setIsProfileDone: () => {},
   checkIfProfileDone: () => {},
 });
 
@@ -71,7 +73,7 @@ export const ProfileDoneProvider: React.FC<{ children: ReactNode }> = ({ childre
   }, []);
 
   return (
-    <ProfileDoneContext.Provider value={{ isProfileDone, checkIfProfileDone }}>
+    <ProfileDoneContext.Provider value={{ isProfileDone, setIsProfileDone, checkIfProfileDone }}>
       {children}
     </ProfileDoneContext.Provider>
   );
