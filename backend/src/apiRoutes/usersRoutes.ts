@@ -122,7 +122,8 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
 
   // Send verification email.
   const mailOptions = {
-    from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com',
+    // from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com>',
+    from: 'Cruise Connect <noreply@thecruiseconnect.com>',
     to: email,
     subject: 'Verify Your Email Address',
     text: `Dear ${getUserResult.firstName || 'User'},
@@ -254,7 +255,8 @@ usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
   
   // Send reset code email.
   const mailOptions = {
-    from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com',
+    // from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com',
+    from: 'Cruise Connect <noreply@thecruiseconnect.com>',
     to: email,
     subject: 'Password Reset Request',
     text: `Dear ${getUserResult.firstName || 'User'},
