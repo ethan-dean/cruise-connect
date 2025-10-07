@@ -47,9 +47,9 @@ jobs:
 
     - name: Deploy to Server
       env:
-        SERVER_USER: ubuntu
+        SERVER_USER: root
         SERVER_HOST: thecruiseconnect.com
-        DEPLOY_PATH: /home/ubuntu/deployments/cc/
+        DEPLOY_PATH: /root/deployments/cc/
       run: |
         # Sync built project files to the server
         ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
