@@ -7,7 +7,8 @@ import path from "path";             // Filesystem managaement
 import fs from "fs/promises";        // File I/O with async
 import { isValid, parse, differenceInYears, isFuture } from 'date-fns';
 
-import { getMailer } from '../utils/getMailer.js';
+import { getResendClient } from '../utils/getResendClient.js';
+// import { getMailer } from '../utils/getMailer.js';
 import { respondIf } from '../utils/respondIf.js';
 import { filterProfanity } from "../utils/filterProfanity.js";
 import { createAccessToken, createRefreshToken, verifyToken,
@@ -120,7 +121,7 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
   if (respondIf(Boolean(err), res, 500, 'Server error, try again later...', 'Failed updateUser: ' + err)) return;
 
   // Send verification email.
-  const mailOptions: object = {
+  const mailOptions = {
     from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com',
     to: email,
     subject: 'Verify Your Email Address',
@@ -147,12 +148,21 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
              </div>
            </div>`
   };
-  getMailer().sendMail(mailOptions, (err: any, _info: any) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error sending verification email', error: err.message });
-    }
-    res.status(201).json({ message: 'Please check your email for verification' });
-  });
+  const { data, error } = await getResendClient().emails.send(mailOptions);
+
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  res.status(200).json({ data });
+
+  // NodeMailer doesn't work on Digital Ocean.
+  // getMailer().sendMail(mailOptions, (err: any, _info: any) => {
+  //   if (err) {
+  //     return res.status(500).json({ message: 'Error sending verification email', error: err.message });
+  //   }
+  //   res.status(201).json({ message: 'Please check your email for verification' });
+  // });
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -270,12 +280,22 @@ usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
              </div>
            </div>`
   };
-  getMailer().sendMail(mailOptions, (err, _info) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error sending reset code', error: err.message });
-    }
-    res.status(200).json({ message: 'Password reset code sent to email valid until ${emailCodeTimeout}' });
-  });
+
+  const { data, error } = await getResendClient().emails.send(mailOptions);
+
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  res.status(200).json({ data });
+
+  // NodeMailer doesn't work on Digital Ocean.
+  // getMailer().sendMail(mailOptions, (err, _info) => {
+  //   if (err) {
+  //     return res.status(500).json({ message: 'Error sending reset code', error: err.message });
+  //   }
+  //   res.status(200).json({ message: 'Password reset code sent to email valid until ${emailCodeTimeout}' });
+  // });
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////
