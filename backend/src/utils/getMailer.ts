@@ -10,6 +10,15 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Verify connection configuration on startup
+transporter.verify(function(error, success) {
+  if (error) {
+    console.error('Mailer configuration error:', error);
+  } else {
+    console.log('Mailer is ready to send emails');
+  }
+});
+
 function getMailer() {
   return transporter;
 }
