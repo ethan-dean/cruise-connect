@@ -23,9 +23,9 @@ expressServer.set('trust proxy', 1);
 // Morgan provides express easier docker HTTP logging that default logs to stdout.
 expressServer.use(morgan('dev'));
 // Allow requests from the following addresses, production and development.
-// www.thecruiseconnect.com is re-routed to thecruiseconnect.com by nginx setup.
+// www.thecruiseconnect.ethandean.dev is not accepted as a valid subdomain.
 expressServer.use(cors({
-  origin: ['https://thecruiseconnect.com', `http://localhost:${devServerPort}`],
+  origin: ['https://thecruiseconnect.ethandean.dev', `http://localhost:${devServerPort}`],
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   credentials: true,      // Allow cookies to be sent/received

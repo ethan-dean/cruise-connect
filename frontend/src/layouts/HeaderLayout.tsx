@@ -42,8 +42,8 @@ export default function HeaderLayout() {
 
         <footer className='mt-10 w-screen py-5 flex flex-col justify-between items-center'>
           <div className='w-[70vw] flex flex-wrap justify-center'>
-            <a className='px-2 text-gray-600 text-sm underline' href='mailto:bugs@thecruiseconnect.com'>Report an Issue?</a>
-            <a className='px-2 text-gray-600 text-sm underline' href='mailto:help@thecruiseconnect.com'>Contact Us</a>
+            <a className='px-2 text-gray-600 text-sm underline' href='mailto:bugs@ethandean.dev'>Report an Issue?</a>
+            <a className='px-2 text-gray-600 text-sm underline' href='mailto:help@ethandean.dev'>Contact Us</a>
           </div>
           <div className='w-[70vw] flex flex-col items-center'>
             <Link className='mt-2 px-2 text-gray-600 text-sm underline' to='/terms-of-service'>Terms of Service</Link>

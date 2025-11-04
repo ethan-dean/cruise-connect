@@ -60,7 +60,7 @@ export default function CruiseFeedPage() {
     getJoinedCruisesData()
   }, []);
 
-  const shareUrl = "https://thecruiseconnect.com/";
+  const shareUrl = "https://thecruiseconnect.ethandean.dev/";
   const shareText = `Join My Cruise on Cruise Connect! 🚢\nFind me on the ${location.state.shipName || 'ship'} on ${format(parseISO(location.state.departureDate), "MMMM do, yyyy")}!\n`;
 
   const handleShare = async () => {

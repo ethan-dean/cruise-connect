@@ -122,8 +122,7 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
 
   // Send verification email.
   const mailOptions = {
-    // from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com>',
-    from: 'Cruise Connect <noreply@thecruiseconnect.com>',
+    from: 'Cruise Connect <noreply@ethandean.dev>',
     to: email,
     subject: 'Verify Your Email Address',
     text: `Dear ${getUserResult.firstName || 'User'},
@@ -138,7 +137,7 @@ usersRouter.post('/send-verification-code', async (req: any, res: any) => {
     Cruise Connect`,
     html: `<div style="max-width: 600px; border: 4px solid black; border-radius: 10px;">
              <div style="width: 100%;">
-               <img src="https://thecruiseconnect.com/email-header.webp" alt="Cruise Connect" style="display: block; margin: 0 auto; width:100%; margin-bottom:5px; border-radius: 5px 5px 0 0;">
+               <img src="https://thecruiseconnect.ethandean.dev/email-header.webp" alt="Cruise Connect" style="display: block; margin: 0 auto; width:100%; margin-bottom:5px; border-radius: 5px 5px 0 0;">
              </div>
              <div style="max-width: 570px; padding: 0px 15px;">
                <p style="color: black;">${getUserResult.firstName || 'User'},</p>
@@ -255,8 +254,7 @@ usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
   
   // Send reset code email.
   const mailOptions = {
-    // from: '"Cruise Connect" <thecruiseconnect.noreply@gmail.com',
-    from: 'Cruise Connect <noreply@thecruiseconnect.com>',
+    from: 'Cruise Connect <noreply@ethandean.dev>',
     to: email,
     subject: 'Password Reset Request',
     text: `Dear ${getUserResult.firstName || 'User'},
@@ -271,7 +269,7 @@ usersRouter.post('/send-password-reset-code', async (req: any, res: any) => {
             Cruise Connect`,
     html: `<div style="max-width: 600px; border: 4px solid black; border-radius: 10px;">
              <div style="width: 100%;">
-               <img src="https://thecruiseconnect.com/email-header.webp" alt="Cruise Connect" style="display: block; margin: 0 auto; width:100%; margin-bottom:5px; border-radius: 5px 5px 0 0;">
+               <img src="https://thecruiseconnect.ethandean.dev/email-header.webp" alt="Cruise Connect" style="display: block; margin: 0 auto; width:100%; margin-bottom:5px; border-radius: 5px 5px 0 0;">
              </div>
              <div style="max-width: 570px; padding: 0px 15px;">
                <p style="color: black;">${getUserResult.firstName || 'User'},</p>

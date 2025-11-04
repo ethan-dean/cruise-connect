@@ -4,6 +4,6 @@ export default function getBackendUrl(): string {
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:5000'; // Set to your localhost backend URL
   } else {
-    return 'https://thecruiseconnect.com'; // Set to your production backend URL
+    return 'https://thecruiseconnect.ethandean.dev'; // Set to your production backend URL
   }
 }
