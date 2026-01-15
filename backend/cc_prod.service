@@ -1,0 +1,22 @@
+[Unit]
+Description=Cruise Connect Production Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/deployments/cc
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=10
+
+# Environment
+Environment=NODE_ENV=production
+
+# Logging (stdout/stderr go to journald)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cc_prod
+
+[Install]
+WantedBy=multi-user.target

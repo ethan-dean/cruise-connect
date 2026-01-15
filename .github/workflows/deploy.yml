@@ -59,10 +59,7 @@ jobs:
           --include "package-lock.json" \
           --exclude "*" \
           ./backend/ $SERVER_USER@$SERVER_HOST:$DEPLOY_PATH
-        # rsync -avz \
-        #   --include "dist/" \
-        #   --include "package.json" \
-        #   --include "package-lock.json" \
-        #   --exclude "*" \
-        #   ./backend $SERVER_USER@$SERVER_HOST:$DEPLOY_PATH
-        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "pm2 restart cc_prod"
+
+        # Copy systemd service file and reload/restart
+        scp ./backend/cc_prod.service $SERVER_USER@$SERVER_HOST:/etc/systemd/system/cc_prod.service
+        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST "systemctl daemon-reload && systemctl enable cc_prod && systemctl restart cc_prod"
